@@ -42,4 +42,19 @@ export const fetchCurrentUser = async () => {
   return data;
 };
 
+export const fetchAdminUsers = async () => {
+  const { data } = await api.get("/admin/users");
+  return data;
+};
+
+export const fetchAdminStats = async () => {
+  const { data } = await api.get("/admin/stats");
+  return data;
+};
+
+export const deleteAdminUser = async (userId) => {
+  const { data } = await api.delete(`/admin/users/${userId}`);
+  return data;
+};
+
 export default api;
