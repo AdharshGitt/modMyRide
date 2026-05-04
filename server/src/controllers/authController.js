@@ -28,7 +28,7 @@ export const register = async (req, res) => {
 
     res.status(201).json({
       token,
-      user: { id: user._id.toString(), email: user.email }
+      user: { id: user._id.toString(), email: user.email, role: user.role }
     });
   } catch (err) {
     console.error(err);
@@ -57,7 +57,7 @@ export const login = async (req, res) => {
     const token = signToken(user._id.toString());
     res.json({
       token,
-      user: { id: user._id.toString(), email: user.email }
+      user: { id: user._id.toString(), email: user.email, role: user.role }
     });
   } catch (err) {
     console.error(err);
@@ -74,12 +74,12 @@ export const getMe = async (req, res) => {
 
     const token = header.slice(7);
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(payload.sub).select("email");
+    const user = await User.findById(payload.sub).select("email role");
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    res.json({ user: { id: user._id.toString(), email: user.email } });
+    res.json({ user: { id: user._id.toString(), email: user.email, role: user.role } });
   } catch {
     res.status(401).json({ message: "Invalid or expired token" });
   }
