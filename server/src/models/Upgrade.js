@@ -1,0 +1,22 @@
+import mongoose from "mongoose";
+
+const upgradeSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    type: { type: String, required: true, enum: ["car", "bike"] },
+    category: { 
+      type: String, 
+      required: true,
+      enum: ["Engine", "Exhaust", "Suspension", "Brakes", "Wheels", "Aesthetics", "Lights"]
+    },
+    price: { type: Number, required: true },
+    performanceGain: { type: String, default: "" },
+    imageUrl: { type: String, default: "" },
+    compatibleVehicles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Vehicle" }]
+  },
+  { timestamps: true }
+);
+
+const Upgrade = mongoose.model("Upgrade", upgradeSchema);
+
+export default Upgrade;

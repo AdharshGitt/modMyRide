@@ -57,4 +57,52 @@ export const deleteAdminUser = async (userId) => {
   return data;
 };
 
+// =======================
+// Vehicle API Functions
+// =======================
+
+export const fetchAdminVehicles = async () => {
+  const { data } = await api.get("/admin/vehicles");
+  return data;
+};
+
+export const createAdminVehicle = async (vehicleData) => {
+  const { data } = await api.post("/admin/vehicles", vehicleData);
+  return data;
+};
+
+export const updateAdminVehicle = async (id, vehicleData) => {
+  const { data } = await api.put(`/admin/vehicles/${id}`, vehicleData);
+  return data;
+};
+
+export const deleteAdminVehicle = async (id) => {
+  const { data } = await api.delete(`/admin/vehicles/${id}`);
+  return data;
+};
+
+// =======================
+// Upgrade API Functions
+// =======================
+
+export const fetchAdminUpgrades = async () => {
+  const { data } = await api.get("/admin/upgrades");
+  return data;
+};
+
+export const createAdminUpgrade = async (upgradeData) => {
+  const { data } = await api.post("/admin/upgrades", upgradeData);
+  return data;
+};
+
+export const updateAdminUpgrade = async (id, upgradeData) => {
+  const { data } = await api.put(`/admin/upgrades/${id}`, upgradeData);
+  return data;
+};
+
+export const deleteAdminUpgrade = async (id) => {
+  const { data } = await api.delete(`/admin/upgrades/${id}`);
+  return data;
+};
+
 export default api;
