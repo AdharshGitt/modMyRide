@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import User from "../models/User.js";
-import Vehicle from "../models/Vehicle.js";
-import Upgrade from "../models/Upgrade.js";
+import { getVehicles, createVehicle, updateVehicle, deleteVehicle } from "../controllers/vehicleController.js";
+import { getUpgrades, createUpgrade, updateUpgrade, deleteUpgrade } from "../controllers/upgradeController.js";
 
 const router = Router();
 
@@ -52,93 +52,18 @@ router.delete("/users/:id", async (req, res) => {
 // Vehicle Routes
 // =======================
 
-router.get("/vehicles", async (req, res) => {
-  try {
-    const vehicles = await Vehicle.find().sort({ createdAt: -1 });
-    res.json({ vehicles });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch vehicles" });
-  }
-});
-
-router.post("/vehicles", async (req, res) => {
-  try {
-    const vehicle = await Vehicle.create(req.body);
-    res.status(201).json({ vehicle });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to create vehicle", error: err.message });
-  }
-});
-
-router.put("/vehicles/:id", async (req, res) => {
-  try {
-    const vehicle = await Vehicle.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found" });
-    }
-    res.json({ vehicle });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to update vehicle", error: err.message });
-  }
-});
-
-router.delete("/vehicles/:id", async (req, res) => {
-  try {
-    const vehicle = await Vehicle.findByIdAndDelete(req.params.id);
-    if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found" });
-    }
-    res.json({ message: "Vehicle deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to delete vehicle", error: err.message });
-  }
-});
+router.get("/vehicles", getVehicles);
+router.post("/vehicles", createVehicle);
+router.put("/vehicles/:id", updateVehicle);
+router.delete("/vehicles/:id", deleteVehicle);
 
 // =======================
 // Upgrade Routes
 // =======================
 
-router.get("/upgrades", async (req, res) => {
-  try {
-    const upgrades = await Upgrade.find().populate("compatibleVehicles").sort({ createdAt: -1 });
-    res.json({ upgrades });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch upgrades", error: err.message });
-  }
-});
-
-router.post("/upgrades", async (req, res) => {
-  try {
-    const upgrade = await Upgrade.create(req.body);
-    const populated = await Upgrade.findById(upgrade._id).populate("compatibleVehicles");
-    res.status(201).json({ upgrade: populated });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to create upgrade", error: err.message });
-  }
-});
-
-router.put("/upgrades/:id", async (req, res) => {
-  try {
-    const upgrade = await Upgrade.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).populate("compatibleVehicles");
-    if (!upgrade) {
-      return res.status(404).json({ message: "Upgrade not found" });
-    }
-    res.json({ upgrade });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to update upgrade", error: err.message });
-  }
-});
-
-router.delete("/upgrades/:id", async (req, res) => {
-  try {
-    const upgrade = await Upgrade.findByIdAndDelete(req.params.id);
-    if (!upgrade) {
-      return res.status(404).json({ message: "Upgrade not found" });
-    }
-    res.json({ message: "Upgrade deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to delete upgrade", error: err.message });
-  }
-});
+router.get("/upgrades", getUpgrades);
+router.post("/upgrades", createUpgrade);
+router.put("/upgrades/:id", updateUpgrade);
+router.delete("/upgrades/:id", deleteUpgrade);
 
 export default router;
