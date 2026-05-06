@@ -12,7 +12,9 @@ const upgradeSchema = new mongoose.Schema(
     price: { type: Number, required: true },
     performanceGain: { type: String, default: "" },
     imageUrl: { type: String, default: "" },
-    compatibleVehicles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Vehicle" }]
+    compatibleVehicles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Vehicle" }],
+    goals: [{ type: String }],
+    stage: { type: String, enum: ["Stage 1", "Stage 2", "Stage 3", "Universal"], default: "Universal" }
   },
   { timestamps: true }
 );

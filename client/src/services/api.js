@@ -57,6 +57,11 @@ export const deleteAdminUser = async (userId) => {
   return data;
 };
 
+export const updateAdminUser = async (userId, userData) => {
+  const { data } = await api.put(`/admin/users/${userId}`, userData);
+  return data;
+};
+
 // =======================
 // Vehicle API Functions
 // =======================

@@ -48,6 +48,34 @@ router.delete("/users/:id", async (req, res) => {
   }
 });
 
+router.put("/users/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const { email, role } = req.body;
+    
+    // Prevent changing role of admin users
+    if (user.role === "admin" && role !== "admin") {
+      return res.status(403).json({ message: "Cannot change role of admin user" });
+    }
+    
+    // Prevent making new admin users
+    if (user.role !== "admin" && role === "admin") {
+      return res.status(403).json({ message: "Cannot promote users to admin" });
+    }
+    
+    user.email = email || user.email;
+    user.role = role || user.role;
+    
+    await user.save();
+    res.json({ user: user });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update user" });
+  }
+});
+
 // =======================
 // Vehicle Routes
 // =======================
