@@ -15,6 +15,23 @@ body {
   min-height: 100vh;
 }
 
+.machined-edge {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+.bg-near-black {
+  background-color: #0A0A0A;
+}
+.bg-surface-elevated {
+  background-color: #1A1A1A;
+}
+.bg-surface-high {
+  background-color: #242424;
+}
+.header-anchor {
+  font-family: 'Oswald';
+  letter-spacing: -0.05em;
+}
+
 .auth-shell {
   min-height: 100vh;
   display: flex;

@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/Button/index.jsx";
-import { InputLabel } from "../components/InputLabel/index.jsx";
 import {
   fetchCurrentUser,
   getHealthStatus,
@@ -99,33 +97,39 @@ const HomePage = () => {
 
   if (!sessionChecked) {
     return (
-      <div className="auth-shell">
-        <div className="auth-card auth-card--loading">
-          <p className="auth-muted">Loading…</p>
-        </div>
+      <div className="flex h-screen w-full items-center justify-center bg-near-black text-white font-['Oswald'] tracking-widest">
+        <p>INITIALIZING SYSTEM...</p>
       </div>
     );
   }
 
   if (user) {
     return (
-      <main className="auth-shell">
-        <div className="auth-card auth-card--wide">
-          <p className="auth-brand">ModMyRide</p>
-          <h1 className="auth-title">You are signed in</h1>
-          <p className="auth-sub">
-            Signed in as <strong>{user.email}</strong>
-          </p>
-          <p className="auth-muted">Backend: {apiStatus}</p>
-          <div className="auth-actions">
+      <main className="flex h-screen w-full items-center justify-center bg-near-black text-on-surface font-body-md">
+        <div className="bg-[#1A1A1A] machined-edge p-8 w-full max-w-md flex flex-col gap-6">
+          <div className="text-center">
+            <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-widest text-sm mb-2">ModMyRide</h2>
+            <h1 className="text-3xl font-bold text-white font-['Oswald'] uppercase tracking-tight">You are signed in</h1>
+          </div>
+          <div className="text-center text-zinc-400 space-y-2">
+            <p>Signed in as <strong className="text-white">{user.email}</strong></p>
+            <p className="text-xs">Backend: {apiStatus}</p>
+          </div>
+          <div className="flex flex-col gap-3 mt-4">
             {user.role === "admin" && (
-              <Button type="button" onClick={() => navigate("/admin")} className="btn-primary">
+              <button 
+                onClick={() => navigate("/admin")} 
+                className="w-full py-3 bg-[#C0392B] text-white font-label-caps tracking-widest hover:bg-[#a93226] transition-colors uppercase text-sm"
+              >
                 Admin Dashboard
-              </Button>
+              </button>
             )}
-            <Button type="button" onClick={handleLogout} className="btn-secondary">
+            <button 
+              onClick={handleLogout} 
+              className="w-full py-3 border border-white/10 text-white font-label-caps tracking-widest hover:bg-white/5 transition-colors uppercase text-sm"
+            >
               Sign out
-            </Button>
+            </button>
           </div>
         </div>
       </main>
@@ -133,101 +137,112 @@ const HomePage = () => {
   }
 
   return (
-    <main className="auth-shell">
-      <div className="auth-card">
-        <p className="auth-brand">ModMyRide</p>
-        <h1 className="auth-title">{mode === "login" ? "Welcome back" : "Create an account"}</h1>
-        <p className="auth-sub">
-          {mode === "login"
-            ? "Sign in to continue building your ride."
-            : "Join to save mods and track your build."}
-        </p>
+    <main className="flex h-screen w-full items-center justify-center bg-near-black text-on-surface font-body-md px-4">
+      <div className="bg-[#1A1A1A] machined-edge p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-widest text-sm mb-2">ModMyRide</h2>
+          <h1 className="text-3xl font-bold text-white font-['Oswald'] uppercase tracking-tight">
+            {mode === "login" ? "Welcome back" : "Create an account"}
+          </h1>
+          <p className="text-zinc-400 mt-2 text-sm">
+            {mode === "login"
+              ? "Sign in to continue building your ride."
+              : "Join to save mods and track your build."}
+          </p>
+        </div>
 
-        <div className="auth-tabs" role="tablist">
+        <div className="flex mb-8 border-b border-white/10">
           <button
             type="button"
-            className={`auth-tab ${mode === "login" ? "auth-tab--active" : ""}`}
+            className={`flex-1 pb-3 font-label-caps uppercase tracking-widest text-sm transition-colors ${mode === "login" ? "text-[#C0392B] border-b-2 border-[#C0392B]" : "text-zinc-500 hover:text-white"}`}
             onClick={() => switchMode("login")}
           >
             Sign in
           </button>
           <button
             type="button"
-            className={`auth-tab ${mode === "signup" ? "auth-tab--active" : ""}`}
+            className={`flex-1 pb-3 font-label-caps uppercase tracking-widest text-sm transition-colors ${mode === "signup" ? "text-[#C0392B] border-b-2 border-[#C0392B]" : "text-zinc-500 hover:text-white"}`}
             onClick={() => switchMode("signup")}
           >
             Sign up
           </button>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          {error ? (
-            <div className="auth-banner auth-banner--error" role="alert">
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          {error && (
+            <div className="bg-[#C0392B]/10 border border-[#C0392B]/20 text-[#C0392B] px-4 py-3 text-sm" role="alert">
               {error}
             </div>
-          ) : null}
+          )}
 
-          <InputLabel
-            htmlFor="auth-email"
-            type="email"
-            name="email"
-            value={email}
-            onChange={(ev) => setEmail(ev.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-            required
-            disabled={loading}
-          >
-            Email
-          </InputLabel>
-
-          <InputLabel
-            htmlFor="auth-password"
-            type="password"
-            name="password"
-            value={password}
-            onChange={(ev) => setPassword(ev.target.value)}
-            placeholder="••••••••"
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
-            required
-            disabled={loading}
-          >
-            Password
-          </InputLabel>
-
-          {mode === "signup" ? (
-            <InputLabel
-              htmlFor="auth-confirm"
-              type="password"
-              name="confirmPassword"
-              value={confirmPassword}
-              onChange={(ev) => setConfirmPassword(ev.target.value)}
-              placeholder="Repeat password"
-              autoComplete="new-password"
+          <div className="space-y-2">
+            <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(ev) => setEmail(ev.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
               required
               disabled={loading}
-            >
-              Confirm password
-            </InputLabel>
-          ) : null}
+              className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm disabled:opacity-50"
+            />
+          </div>
 
-          <Button type="submit" disabled={loading} className="btn-primary btn-block">
+          <div className="space-y-2">
+            <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={password}
+              onChange={(ev) => setPassword(ev.target.value)}
+              placeholder="••••••••"
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              required
+              disabled={loading}
+              className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm disabled:opacity-50"
+            />
+          </div>
+
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Confirm Password</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={(ev) => setConfirmPassword(ev.target.value)}
+                placeholder="Repeat password"
+                autoComplete="new-password"
+                required
+                disabled={loading}
+                className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm disabled:opacity-50"
+              />
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full py-3 mt-4 bg-[#C0392B] text-white font-label-caps tracking-widest hover:bg-[#a93226] transition-colors uppercase text-sm disabled:opacity-50"
+          >
             {loading ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
-          </Button>
+          </button>
         </form>
 
-        <p className="auth-footer">
+        <p className="mt-6 text-center text-zinc-500 text-sm">
           {mode === "login" ? (
             <>
               New here?{" "}
-              <button type="button" className="auth-link" onClick={() => switchMode("signup")}>
+              <button type="button" className="text-[#C0392B] hover:underline" onClick={() => switchMode("signup")}>
                 Create an account
               </button>
             </>
           ) : (
             <>
               Already have an account?{" "}
-              <button type="button" className="auth-link" onClick={() => switchMode("login")}>
+              <button type="button" className="text-[#C0392B] hover:underline" onClick={() => switchMode("login")}>
                 Sign in
               </button>
             </>
