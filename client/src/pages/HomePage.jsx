@@ -12,6 +12,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -52,6 +53,7 @@ const HomePage = () => {
   const switchMode = (next) => {
     setMode(next);
     setError("");
+    setUsername("");
     setPassword("");
     setConfirmPassword("");
   };
@@ -66,7 +68,7 @@ const HomePage = () => {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const data = await registerUser(email, password);
+        const data = await registerUser(email, password, username);
         setAuthToken(data.token);
         setUser(data.user);
         if (data.user.role === "admin") navigate("/admin");
@@ -90,6 +92,7 @@ const HomePage = () => {
     setAuthToken(null);
     setUser(null);
     setEmail("");
+    setUsername("");
     setPassword("");
     setConfirmPassword("");
     setError("");
@@ -172,6 +175,22 @@ const HomePage = () => {
           {error && (
             <div className="bg-[#C0392B]/10 border border-[#C0392B]/20 text-[#C0392B] px-4 py-3 text-sm" role="alert">
               {error}
+            </div>
+          )}
+
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Username</label>
+              <input
+                type="text"
+                name="username"
+                value={username}
+                onChange={(ev) => setUsername(ev.target.value)}
+                placeholder="Your Name"
+                required
+                disabled={loading}
+                className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm disabled:opacity-50"
+              />
             </div>
           )}
 

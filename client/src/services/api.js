@@ -27,8 +27,8 @@ export const getHealthStatus = async () => {
   return data;
 };
 
-export const registerUser = async (email, password) => {
-  const { data } = await api.post("/auth/register", { email, password });
+export const registerUser = async (email, password, username) => {
+  const { data } = await api.post("/auth/register", { email, password, username });
   return data;
 };
 
