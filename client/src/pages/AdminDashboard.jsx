@@ -39,6 +39,16 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [overviewActiveTab, setOverviewActiveTab] = useState("users");
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem("modmyride_theme") || "dark");
+  const [adminProfile, setAdminProfile] = useState({ email: "", username: "", role: "" });
+  const [growthTimeframe, setGrowthTimeframe] = useState("6m");
+  const [partsTimeframe, setPartsTimeframe] = useState("month");
+  const isLight = theme === "light";
+  const chartTextColor = isLight ? "#475569" : "#94a3b8";
+  const chartGridColor = isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)";
+  const cardBg = isLight ? "bg-white" : "bg-[#1A1A1A]";
+  const tableHeaderBg = isLight ? "bg-[#f8fafc]" : "bg-[#111111]";
   const [userPage, setUserPage] = useState(1);
   const [vehicleTab, setVehicleTab] = useState("cars");
   const [carPage, setCarPage] = useState(1);
@@ -213,6 +223,15 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
+    localStorage.setItem("modmyride_theme", theme);
+    if (theme === "light") {
+      document.body.classList.add("light-mode");
+    } else {
+      document.body.classList.remove("light-mode");
+    }
+  }, [theme]);
+
+  useEffect(() => {
     const init = async () => {
       try {
         const { user } = await fetchCurrentUser();
@@ -232,6 +251,7 @@ const AdminDashboard = () => {
         setStats(statsData);
         setVehicles(vehiclesData.vehicles);
         setUpgrades(upgradesData.upgrades);
+        setAdminProfile(user);
       } catch (err) {
         setError("Access denied or failed to load data.");
         setTimeout(() => navigate("/"), 2000);
@@ -405,10 +425,47 @@ const AdminDashboard = () => {
           <div className="flex items-center gap-6">
             <h1 className="text-2xl font-bold text-[#C0392B] font-['Oswald'] uppercase tracking-tighter">MODMYRIDE</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="h-8 w-8 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden">
-              <span className="material-symbols-outlined text-zinc-500 text-sm">person</span>
-            </div>
+          <div className="flex items-center gap-4 relative">
+            <button 
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="h-9 w-9 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden hover:border-[#C0392B] transition-all group"
+            >
+              <span className="material-symbols-outlined text-zinc-500 group-hover:text-white text-base">person</span>
+            </button>
+
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 top-12 w-64 bg-[#1A1A1A] machined-edge shadow-2xl z-50 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="border-b border-white/5 pb-4">
+                  <p className="font-['Oswald'] text-white uppercase text-xs tracking-widest mb-1">{adminProfile.username || 'Admin User'}</p>
+                  <p className="text-zinc-500 text-[10px] truncate">{adminProfile.email}</p>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-zinc-400">
+                      <span className="material-symbols-outlined text-sm">{theme === 'dark' ? 'dark_mode' : 'light_mode'}</span>
+                      <span className="text-[11px] uppercase font-label-caps tracking-wider">Appearance</span>
+                    </div>
+                    <button 
+                      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                      className="w-10 h-5 rounded-full bg-zinc-800 relative p-1 transition-colors"
+                    >
+                      <div className={`h-3 w-3 rounded-full bg-[#C0392B] transition-all duration-300 ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-white/5 pt-4">
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 text-[#C0392B] hover:bg-[#C0392B]/10 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
+                  >
+                    <span className="material-symbols-outlined text-sm">logout</span>
+                    <span>Logout Account</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </header>
 
@@ -475,31 +532,45 @@ const AdminDashboard = () => {
                     <div className="bg-[#1A1A1A] machined-edge p-6">
                       <div className="flex justify-between items-center mb-6">
                         <h3 className="font-h3 text-white uppercase tracking-wider text-sm">User Growth <span className="text-[10px] text-zinc-500 font-normal ml-2">(New users over time)</span></h3>
-                        <select className="bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] px-2 py-1 rounded outline-none font-label-caps">
-                          <option>Last 6 Months</option>
-                        </select>
+                        <div className="relative flex items-center group">
+                          <select 
+                            value={growthTimeframe}
+                            onChange={(e) => setGrowthTimeframe(e.target.value)}
+                            className="appearance-none bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] pl-3 pr-8 py-1.5 rounded-none outline-none font-label-caps cursor-pointer hover:border-[#C0392B]/50 transition-all"
+                            style={{ 
+                              backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='${isLight ? '%23475569' : '%23666'}'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")`,
+                              backgroundRepeat: 'no-repeat',
+                              backgroundPosition: 'right 0.5rem center',
+                              backgroundSize: '1em'
+                            }}
+                          >
+                            <option value="6m">Last 6 Months</option>
+                            <option value="12m">Last 12 Months</option>
+                            <option value="all">All Time</option>
+                          </select>
+                        </div>
                       </div>
                       <div className="h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={stats.userGrowth}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
                             <XAxis 
                               dataKey="month" 
-                              stroke="#666" 
+                              stroke={chartTextColor} 
                               fontSize={10} 
                               tickLine={false} 
                               axisLine={false}
                               dy={10}
                             />
                             <YAxis 
-                              stroke="#666" 
+                              stroke={chartTextColor} 
                               fontSize={10} 
                               tickLine={false} 
                               axisLine={false}
                               dx={-10}
                             />
                             <Tooltip 
-                              contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '12px', color: '#fff' }}
+                              contentStyle={{ backgroundColor: isLight ? '#fff' : '#111', border: `1px solid ${isLight ? '#e2e8f0' : '#333'}`, fontSize: '12px', color: isLight ? '#0f172a' : '#fff' }}
                               itemStyle={{ color: '#C0392B' }}
                             />
                             <Line 
@@ -547,7 +618,7 @@ const AdminDashboard = () => {
                                         <tspan 
                                           x={cx} 
                                           dy="-2" 
-                                          fill="#fff" 
+                                          fill={isLight ? "#0f172a" : "#fff"} 
                                           fontSize="38" 
                                           fontWeight="bold" 
                                           style={{ fontFamily: 'Oswald' }}
@@ -571,7 +642,7 @@ const AdminDashboard = () => {
                               />
                             </Pie>
                             <Tooltip 
-                              contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '12px', color: '#fff' }}
+                              contentStyle={{ backgroundColor: isLight ? '#fff' : '#111', border: `1px solid ${isLight ? '#e2e8f0' : '#333'}`, fontSize: '12px', color: isLight ? '#0f172a' : '#fff' }}
                             />
                             <Legend 
                               verticalAlign="bottom" 
@@ -593,17 +664,31 @@ const AdminDashboard = () => {
                     <div className="bg-[#1A1A1A] machined-edge p-6">
                       <div className="flex justify-between items-center mb-6">
                         <h3 className="font-h3 text-white uppercase tracking-wider text-sm">Parts Category</h3>
-                        <select className="bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] px-2 py-1 rounded outline-none font-label-caps">
-                          <option>This Month</option>
-                        </select>
+                        <div className="relative flex items-center group">
+                          <select 
+                            value={partsTimeframe}
+                            onChange={(e) => setPartsTimeframe(e.target.value)}
+                            className="appearance-none bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] pl-3 pr-8 py-1.5 rounded-none outline-none font-label-caps cursor-pointer hover:border-[#C0392B]/50 transition-all"
+                            style={{ 
+                              backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='${isLight ? '%23475569' : '%23666'}'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")`,
+                              backgroundRepeat: 'no-repeat',
+                              backgroundPosition: 'right 0.5rem center',
+                              backgroundSize: '1em'
+                            }}
+                          >
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                            <option value="year">This Year</option>
+                          </select>
+                        </div>
                       </div>
                       <div className="h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={stats.partsActivity}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
                             <XAxis 
                               dataKey="category" 
-                              stroke="#666" 
+                              stroke={chartTextColor} 
                               fontSize={8} 
                               tickLine={false} 
                               axisLine={false}
@@ -613,15 +698,15 @@ const AdminDashboard = () => {
                               height={60}
                             />
                             <YAxis 
-                              stroke="#666" 
+                              stroke={chartTextColor} 
                               fontSize={10} 
                               tickLine={false} 
                               axisLine={false}
                               dx={-10}
                             />
                             <Tooltip 
-                              cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                              contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '12px', color: '#fff' }}
+                              cursor={{ fill: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.05)' }}
+                              contentStyle={{ backgroundColor: isLight ? '#fff' : '#111', border: `1px solid ${isLight ? '#e2e8f0' : '#333'}`, fontSize: '12px', color: isLight ? '#0f172a' : '#fff' }}
                             />
                             <Bar 
                               dataKey="count" 

@@ -43,6 +43,111 @@ body {
   letter-spacing: -0.05em;
 }
 
+/* Light Mode Overrides */
+body.light-mode {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+body.light-mode .bg-near-black {
+  background-color: #f1f5f9;
+}
+
+body.light-mode .admin-layout {
+  background: radial-gradient(circle at top right, #f8fafc, #e2e8f0);
+  color: #0f172a;
+}
+
+body.light-mode aside {
+  background-color: #ffffff;
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 4px 0 0 0 #f1f5f9;
+}
+
+body.light-mode header {
+  background-color: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode main {
+  background-color: #f8fafc;
+}
+
+body.light-mode .bg-\[\#1A1A1A\] {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .bg-\[\#111111\] {
+  background-color: #f8fafc !important;
+}
+
+body.light-mode .text-white {
+  color: #0f172a !important;
+}
+
+body.light-mode .text-zinc-400, 
+body.light-mode .text-zinc-500 {
+  color: #64748b !important;
+}
+
+body.light-mode .border-white\/5,
+body.light-mode .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .machined-edge {
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode table thead {
+  background-color: #f1f5f9 !important;
+}
+
+body.light-mode table tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+body.light-mode .text-white\/40 {
+  color: rgba(15, 23, 42, 0.4) !important;
+}
+
+body.light-mode .text-white\/60 {
+  color: rgba(15, 23, 42, 0.6) !important;
+}
+
+body.light-mode .text-white\/80 {
+  color: rgba(15, 23, 42, 0.8) !important;
+}
+
+body.light-mode .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+body.light-mode .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .bg-zinc-900 {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode .bg-zinc-800 {
+  background-color: #f1f5f9 !important;
+}
+
+/* Hide default select arrows for custom dropdowns */
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+select::-ms-expand {
+  display: none !important;
+}
+
 .auth-shell {
   min-height: 100vh;
   display: flex;

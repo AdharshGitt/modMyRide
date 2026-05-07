@@ -23,12 +23,16 @@ export const register = async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await User.create({ email: normalized, password: hashed });
+    const user = await User.create({ 
+      email: normalized, 
+      password: hashed,
+      username: req.body.username || normalized.split("@")[0]
+    });
     const token = signToken(user._id.toString());
 
     res.status(201).json({
       token,
-      user: { id: user._id.toString(), email: user.email, role: user.role }
+      user: { id: user._id.toString(), email: user.email, role: user.role, username: user.username || user.email.split("@")[0] }
     });
   } catch (err) {
     console.error(err);
@@ -57,7 +61,7 @@ export const login = async (req, res) => {
     const token = signToken(user._id.toString());
     res.json({
       token,
-      user: { id: user._id.toString(), email: user.email, role: user.role }
+      user: { id: user._id.toString(), email: user.email, role: user.role, username: user.username || user.email.split("@")[0] }
     });
   } catch (err) {
     console.error(err);
@@ -74,12 +78,12 @@ export const getMe = async (req, res) => {
 
     const token = header.slice(7);
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(payload.sub).select("email role");
+    const user = await User.findById(payload.sub).select("email role username");
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    res.json({ user: { id: user._id.toString(), email: user.email, role: user.role } });
+    res.json({ user: { id: user._id.toString(), email: user.email, role: user.role, username: user.username || user.email.split("@")[0] } });
   } catch {
     res.status(401).json({ message: "Invalid or expired token" });
   }
