@@ -468,11 +468,9 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Charts and Summary Section */}
-              <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                {/* Charts Column */}
-                <div className="xl:col-span-3 space-y-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Charts Section */}
+              <div className="space-y-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* User Growth Chart */}
                     <div className="bg-[#1A1A1A] machined-edge p-6">
                       <div className="flex justify-between items-center mb-6">
@@ -520,7 +518,7 @@ const AdminDashboard = () => {
 
                     {/* Vehicle Distribution Chart */}
                     <div className="bg-[#1A1A1A] machined-edge p-6">
-                      <h3 className="font-h3 text-white uppercase tracking-wider text-sm mb-6">Vehicle Distribution</h3>
+                      <h3 className="font-h3 text-white uppercase tracking-wider text-sm mb-6">Vehicles</h3>
                       <div className="h-[250px] w-full flex items-center justify-center relative">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
@@ -531,14 +529,15 @@ const AdminDashboard = () => {
                               ]}
                               cx="50%"
                               cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={5}
+                              innerRadius={75}
+                              outerRadius={90}
+                              paddingAngle={4}
                               dataKey="value"
                               stroke="none"
+                              cornerRadius={4}
                             >
                               <Cell fill="#C0392B" />
-                              <Cell fill="#333" />
+                              <Cell fill="#27272a" />
                               <Label 
                                 content={({ viewBox }) => {
                                   const { cx, cy } = viewBox;
@@ -559,11 +558,11 @@ const AdminDashboard = () => {
                                           x={cx} 
                                           dy="22" 
                                           fill="#71717a" 
-                                          fontSize="10" 
-                                          fontWeight="500" 
-                                          style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                                          fontSize="9" 
+                                          fontWeight="600" 
+                                          style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}
                                         >
-                                          TOTAL VEHICLES
+                                          ACTIVE UNITS
                                         </tspan>
                                       </text>
                                     </g>
@@ -593,7 +592,7 @@ const AdminDashboard = () => {
                     {/* Parts Catalog Activity Chart */}
                     <div className="bg-[#1A1A1A] machined-edge p-6">
                       <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-h3 text-white uppercase tracking-wider text-sm">Parts Catalog Activity</h3>
+                        <h3 className="font-h3 text-white uppercase tracking-wider text-sm">Parts Category</h3>
                         <select className="bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] px-2 py-1 rounded outline-none font-label-caps">
                           <option>This Month</option>
                         </select>
@@ -605,10 +604,13 @@ const AdminDashboard = () => {
                             <XAxis 
                               dataKey="category" 
                               stroke="#666" 
-                              fontSize={9} 
+                              fontSize={8} 
                               tickLine={false} 
                               axisLine={false}
-                              dy={10}
+                              interval={0}
+                              angle={-45}
+                              textAnchor="end"
+                              height={60}
                             />
                             <YAxis 
                               stroke="#666" 
@@ -633,90 +635,20 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Admins vs Users Chart */}
-                    <div className="bg-[#1A1A1A] machined-edge p-6">
-                      <h3 className="font-h3 text-white uppercase tracking-wider text-sm mb-6">Admins vs Users</h3>
-                      <div className="h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart 
-                            layout="vertical" 
-                            data={[
-                              { name: 'Admins', count: stats.adminUsers },
-                              { name: 'Users', count: stats.regularUsers }
-                            ]}
-                            margin={{ left: 20 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
-                            <XAxis type="number" stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
-                            <YAxis 
-                              dataKey="name" 
-                              type="category" 
-                              stroke="#fff" 
-                              fontSize={12} 
-                              tickLine={false} 
-                              axisLine={false}
-                            />
-                            <Tooltip 
-                              cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                              contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '12px', color: '#fff' }}
-                            />
-                            <Bar dataKey="count" fill="#C0392B" radius={[0, 4, 4, 0]} barSize={40} label={{ position: 'right', fill: '#fff', fontSize: 14, fontWeight: 'bold' }} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
-                {/* Sidebar Summary Column */}
-                <div className="space-y-6">
-                  <div className="bg-[#1A1A1A] machined-edge p-6">
-                    <h3 className="font-h3 text-white uppercase tracking-wider text-sm mb-6">Quick Summary</h3>
-                    <div className="space-y-6">
-                      <div className="flex items-start gap-4">
-                        <div className="h-10 w-10 rounded-full bg-[#C0392B]/10 flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-[#C0392B] text-xl">groups</span>
-                        </div>
-                        <div>
-                          <p className="text-white font-medium text-sm">Active Users Today</p>
-                          <p className="text-zinc-500 text-[10px] mb-1">Users joined in last 24 hours</p>
-                          <span className="text-[#C0392B] text-2xl font-bold">{stats.activeUsersToday}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start gap-4">
-                        <div className="h-10 w-10 rounded-full bg-[#C0392B]/10 flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-[#C0392B] text-xl">directions_car</span>
-                        </div>
-                        <div>
-                          <p className="text-white font-medium text-sm">Vehicles Listed</p>
-                          <p className="text-zinc-500 text-[10px] mb-1">Total vehicles in catalog</p>
-                          <span className="text-[#C0392B] text-2xl font-bold">{stats.vehicleDistribution.cars + stats.vehicleDistribution.bikes}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-4">
-                        <div className="h-10 w-10 rounded-full bg-[#C0392B]/10 flex items-center justify-center shrink-0">
-                          <span className="material-symbols-outlined text-[#C0392B] text-xl">settings</span>
-                        </div>
-                        <div>
-                          <p className="text-white font-medium text-sm">Parts Available</p>
-                          <p className="text-zinc-500 text-[10px] mb-1">Total parts in catalog</p>
-                          <span className="text-[#C0392B] text-2xl font-bold">{upgrades.length}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Overview Tabs (Now moved below charts) */}
+              {/* Overview Tabs */}
               <div className="mt-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="h-px w-8 bg-[#C0392B]"></span>
+                  <h2 className="font-h3 text-white uppercase tracking-widest text-xs">Recent Activity</h2>
+                </div>
                 <Tabs
                   tabs={[
-                    { id: "users", label: "Recent Users" },
-                    { id: "vehicles", label: "Recent Vehicles" },
-                    { id: "parts", label: "Recent Parts" }
+                    { id: "users", label: "Users" },
+                    { id: "vehicles", label: "Vehicles" },
+                    { id: "parts", label: "Parts" }
                   ]}
                   activeTab={overviewActiveTab}
                   setActiveTab={setOverviewActiveTab}
