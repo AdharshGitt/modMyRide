@@ -1,5 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Tabs from "../components/Tabs.jsx";
+import Pagination from "../components/Pagination.jsx";
+import { 
+  ResponsiveContainer, 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend,
+  Label
+} from 'recharts';
 import { 
   fetchAdminUsers, 
   fetchAdminStats, 
@@ -20,7 +38,23 @@ import {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
-  const [stats, setStats] = useState({ totalUsers: 0, adminUsers: 0, regularUsers: 0 });
+  const [overviewActiveTab, setOverviewActiveTab] = useState("users");
+  const [userPage, setUserPage] = useState(1);
+  const [vehicleTab, setVehicleTab] = useState("cars");
+  const [carPage, setCarPage] = useState(1);
+  const [bikePage, setBikePage] = useState(1);
+  const [upgradeTab, setUpgradeTab] = useState("carUpgrades");
+  const [carUpgradePage, setCarUpgradePage] = useState(1);
+  const [bikeUpgradePage, setBikeUpgradePage] = useState(1);
+  const [stats, setStats] = useState({ 
+    totalUsers: 0, 
+    adminUsers: 0, 
+    regularUsers: 0,
+    vehicleDistribution: { cars: 0, bikes: 0 },
+    partsActivity: [],
+    activeUsersToday: 0,
+    userGrowth: []
+  });
   const [users, setUsers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [upgrades, setUpgrades] = useState([]);
@@ -323,9 +357,8 @@ const AdminDashboard = () => {
     <div className="flex h-screen w-full bg-near-black text-on-surface font-body-md overflow-hidden">
       {/* SideNavBar */}
       <aside className="bg-[#1A1A1A] w-64 border-r border-white/5 shadow-[4px_0_0_0_#000000] flex flex-col h-full p-4 gap-2 shrink-0">
-        <div className="mb-8 px-2">
-          <div className="text-xl font-black text-white font-['Oswald'] uppercase tracking-tight">CONTROL CENTER</div>
-          <div className="text-zinc-500 font-['Oswald'] uppercase font-medium tracking-tight text-xs">Precision Engineering</div>
+        <div className="mb-8 px-3">
+          <div className="text-xl font-black text-white font-['Oswald'] uppercase tracking-tight">ADMIN DASHBOARD</div>
         </div>
         <nav className="flex-1 space-y-2">
           <button 
@@ -370,7 +403,7 @@ const AdminDashboard = () => {
         {/* TopAppBar */}
         <header className="bg-[#0A0A0A] border-b border-white/10 flex justify-between items-center w-full px-6 h-16 shrink-0">
           <div className="flex items-center gap-6">
-            <h1 className="text-2xl font-bold text-[#C0392B] font-['Oswald'] uppercase tracking-tighter">PERFORMANCE TUNER</h1>
+            <h1 className="text-2xl font-bold text-[#C0392B] font-['Oswald'] uppercase tracking-tighter">MODMYRIDE</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="h-8 w-8 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden">
@@ -386,133 +419,407 @@ const AdminDashboard = () => {
               {/* Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
                 <div className="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-                  <p className="font-label-caps text-zinc-500 uppercase mb-2">Total Users</p>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-label-caps text-zinc-500 uppercase text-[10px] tracking-widest">Total Users</p>
+                    <span className="material-symbols-outlined text-[#C0392B] text-lg opacity-50">groups</span>
+                  </div>
                   <h2 className="font-h1 text-4xl text-white">{stats.totalUsers}</h2>
+                  <p className="text-zinc-600 text-[9px] mt-1 uppercase font-label-caps tracking-tighter">All registered users</p>
                 </div>
                 <div className="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-                  <p className="font-label-caps text-zinc-500 uppercase mb-2">Regular Users</p>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-label-caps text-zinc-500 uppercase text-[10px] tracking-widest">Regular Users</p>
+                    <span className="material-symbols-outlined text-[#C0392B] text-lg opacity-50">person</span>
+                  </div>
                   <h2 className="font-h1 text-4xl text-white">{stats.regularUsers}</h2>
+                  <p className="text-zinc-600 text-[9px] mt-1 uppercase font-label-caps tracking-tighter">Non-admin users</p>
                 </div>
                 <div className="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-                  <p className="font-label-caps text-zinc-500 uppercase mb-2">Admins</p>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-label-caps text-zinc-500 uppercase text-[10px] tracking-widest">Admins</p>
+                    <span className="material-symbols-outlined text-[#C0392B] text-lg opacity-50">security</span>
+                  </div>
                   <h2 className="font-h1 text-4xl text-white">{stats.adminUsers}</h2>
+                  <p className="text-zinc-600 text-[9px] mt-1 uppercase font-label-caps tracking-tighter">Total admin accounts</p>
                 </div>
                 <div className="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-                  <p className="font-label-caps text-zinc-500 uppercase mb-2">Cars</p>
-                  <h2 className="font-h1 text-4xl text-white">{vehicles.filter(v => v.type === 'car').length}</h2>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-label-caps text-zinc-500 uppercase text-[10px] tracking-widest">Cars</p>
+                    <span className="material-symbols-outlined text-[#C0392B] text-lg opacity-50">directions_car</span>
+                  </div>
+                  <h2 className="font-h1 text-4xl text-white">{stats.vehicleDistribution.cars}</h2>
+                  <p className="text-zinc-600 text-[9px] mt-1 uppercase font-label-caps tracking-tighter">Total cars listed</p>
                 </div>
                 <div className="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-                  <p className="font-label-caps text-zinc-500 uppercase mb-2">Bikes</p>
-                  <h2 className="font-h1 text-4xl text-white">{vehicles.filter(v => v.type === 'bike').length}</h2>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-label-caps text-zinc-500 uppercase text-[10px] tracking-widest">Bikes</p>
+                    <span className="material-symbols-outlined text-[#C0392B] text-lg opacity-50">motorcycle</span>
+                  </div>
+                  <h2 className="font-h1 text-4xl text-white">{stats.vehicleDistribution.bikes}</h2>
+                  <p className="text-zinc-600 text-[9px] mt-1 uppercase font-label-caps tracking-tighter">Total bikes listed</p>
                 </div>
                 <div className="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-                  <p className="font-label-caps text-zinc-500 uppercase mb-2">Total Parts</p>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-label-caps text-zinc-500 uppercase text-[10px] tracking-widest">Total Parts</p>
+                    <span className="material-symbols-outlined text-[#C0392B] text-lg opacity-50">settings</span>
+                  </div>
                   <h2 className="font-h1 text-4xl text-white">{upgrades.length}</h2>
+                  <p className="text-zinc-600 text-[9px] mt-1 uppercase font-label-caps tracking-tighter">Total parts available</p>
                 </div>
               </div>
 
-              {/* Recent Users */}
-              <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden mb-8">
-                <div className="p-6 border-b border-white/5">
-                  <h3 className="font-h3 text-white uppercase tracking-wider">Recent Users</h3>
+              {/* Charts and Summary Section */}
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                {/* Charts Column */}
+                <div className="xl:col-span-3 space-y-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* User Growth Chart */}
+                    <div className="bg-[#1A1A1A] machined-edge p-6">
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-h3 text-white uppercase tracking-wider text-sm">User Growth <span className="text-[10px] text-zinc-500 font-normal ml-2">(New users over time)</span></h3>
+                        <select className="bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] px-2 py-1 rounded outline-none font-label-caps">
+                          <option>Last 6 Months</option>
+                        </select>
+                      </div>
+                      <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={stats.userGrowth}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                            <XAxis 
+                              dataKey="month" 
+                              stroke="#666" 
+                              fontSize={10} 
+                              tickLine={false} 
+                              axisLine={false}
+                              dy={10}
+                            />
+                            <YAxis 
+                              stroke="#666" 
+                              fontSize={10} 
+                              tickLine={false} 
+                              axisLine={false}
+                              dx={-10}
+                            />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '12px', color: '#fff' }}
+                              itemStyle={{ color: '#C0392B' }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="count" 
+                              name="Users Joined"
+                              stroke="#C0392B" 
+                              strokeWidth={3} 
+                              dot={{ r: 4, fill: '#C0392B', strokeWidth: 0 }}
+                              activeDot={{ r: 6, fill: '#fff', stroke: '#C0392B', strokeWidth: 2 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Vehicle Distribution Chart */}
+                    <div className="bg-[#1A1A1A] machined-edge p-6">
+                      <h3 className="font-h3 text-white uppercase tracking-wider text-sm mb-6">Vehicle Distribution</h3>
+                      <div className="h-[250px] w-full flex items-center justify-center relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: 'Cars', value: stats.vehicleDistribution.cars },
+                                { name: 'Bikes', value: stats.vehicleDistribution.bikes }
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={5}
+                              dataKey="value"
+                              stroke="none"
+                            >
+                              <Cell fill="#C0392B" />
+                              <Cell fill="#333" />
+                              <Label 
+                                content={({ viewBox }) => {
+                                  const { cx, cy } = viewBox;
+                                  return (
+                                    <g>
+                                      <text x={cx} y={cy - 10} textAnchor="middle">
+                                        <tspan 
+                                          x={cx} 
+                                          dy="-2" 
+                                          fill="#fff" 
+                                          fontSize="38" 
+                                          fontWeight="bold" 
+                                          style={{ fontFamily: 'Oswald' }}
+                                        >
+                                          {stats.vehicleDistribution.cars + stats.vehicleDistribution.bikes}
+                                        </tspan>
+                                        <tspan 
+                                          x={cx} 
+                                          dy="22" 
+                                          fill="#71717a" 
+                                          fontSize="10" 
+                                          fontWeight="500" 
+                                          style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                                        >
+                                          TOTAL VEHICLES
+                                        </tspan>
+                                      </text>
+                                    </g>
+                                  );
+                                }}
+                              />
+                            </Pie>
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '12px', color: '#fff' }}
+                            />
+                            <Legend 
+                              verticalAlign="bottom" 
+                              align="center" 
+                              iconType="circle"
+                              wrapperStyle={{ paddingTop: '20px' }}
+                              formatter={(value) => (
+                                <span className="text-zinc-500 text-[11px] uppercase font-label-caps tracking-wider ml-1">
+                                  {value}
+                                </span>
+                              )}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Parts Catalog Activity Chart */}
+                    <div className="bg-[#1A1A1A] machined-edge p-6">
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-h3 text-white uppercase tracking-wider text-sm">Parts Catalog Activity</h3>
+                        <select className="bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] px-2 py-1 rounded outline-none font-label-caps">
+                          <option>This Month</option>
+                        </select>
+                      </div>
+                      <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={stats.partsActivity}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                            <XAxis 
+                              dataKey="category" 
+                              stroke="#666" 
+                              fontSize={9} 
+                              tickLine={false} 
+                              axisLine={false}
+                              dy={10}
+                            />
+                            <YAxis 
+                              stroke="#666" 
+                              fontSize={10} 
+                              tickLine={false} 
+                              axisLine={false}
+                              dx={-10}
+                            />
+                            <Tooltip 
+                              cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                              contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '12px', color: '#fff' }}
+                            />
+                            <Bar 
+                              dataKey="count" 
+                              name="Parts Added"
+                              fill="#C0392B" 
+                              radius={[4, 4, 0, 0]}
+                              barSize={30}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Admins vs Users Chart */}
+                    <div className="bg-[#1A1A1A] machined-edge p-6">
+                      <h3 className="font-h3 text-white uppercase tracking-wider text-sm mb-6">Admins vs Users</h3>
+                      <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart 
+                            layout="vertical" 
+                            data={[
+                              { name: 'Admins', count: stats.adminUsers },
+                              { name: 'Users', count: stats.regularUsers }
+                            ]}
+                            margin={{ left: 20 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
+                            <XAxis type="number" stroke="#666" fontSize={10} tickLine={false} axisLine={false} />
+                            <YAxis 
+                              dataKey="name" 
+                              type="category" 
+                              stroke="#fff" 
+                              fontSize={12} 
+                              tickLine={false} 
+                              axisLine={false}
+                            />
+                            <Tooltip 
+                              cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                              contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '12px', color: '#fff' }}
+                            />
+                            <Bar dataKey="count" fill="#C0392B" radius={[0, 4, 4, 0]} barSize={40} label={{ position: 'right', fill: '#fff', fontSize: 14, fontWeight: 'bold' }} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left font-body-sm">
-                    <thead className="bg-[#111111] border-b border-white/5">
-                      <tr>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">ID</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Email</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Role</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Joined</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {users.slice(0, 5).map((user) => (
-                        <tr key={user._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                          <td className="px-6 py-4 text-[#C0392B] font-mono">{user._id.slice(-6)}</td>
-                          <td className="px-6 py-4 text-white font-medium">{user.email}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-label-caps uppercase ${user.role === 'admin' ? 'bg-[#C0392B]/10 text-[#C0392B]' : 'bg-zinc-800 text-zinc-400'}`}>
-                              {user.role}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-zinc-400">{new Date(user.createdAt).toLocaleDateString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+
+                {/* Sidebar Summary Column */}
+                <div className="space-y-6">
+                  <div className="bg-[#1A1A1A] machined-edge p-6">
+                    <h3 className="font-h3 text-white uppercase tracking-wider text-sm mb-6">Quick Summary</h3>
+                    <div className="space-y-6">
+                      <div className="flex items-start gap-4">
+                        <div className="h-10 w-10 rounded-full bg-[#C0392B]/10 flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[#C0392B] text-xl">groups</span>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium text-sm">Active Users Today</p>
+                          <p className="text-zinc-500 text-[10px] mb-1">Users joined in last 24 hours</p>
+                          <span className="text-[#C0392B] text-2xl font-bold">{stats.activeUsersToday}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-4">
+                        <div className="h-10 w-10 rounded-full bg-[#C0392B]/10 flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[#C0392B] text-xl">directions_car</span>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium text-sm">Vehicles Listed</p>
+                          <p className="text-zinc-500 text-[10px] mb-1">Total vehicles in catalog</p>
+                          <span className="text-[#C0392B] text-2xl font-bold">{stats.vehicleDistribution.cars + stats.vehicleDistribution.bikes}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-4">
+                        <div className="h-10 w-10 rounded-full bg-[#C0392B]/10 flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[#C0392B] text-xl">settings</span>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium text-sm">Parts Available</p>
+                          <p className="text-zinc-500 text-[10px] mb-1">Total parts in catalog</p>
+                          <span className="text-[#C0392B] text-2xl font-bold">{upgrades.length}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Recent Vehicles */}
-              <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden mb-8">
-                <div className="p-6 border-b border-white/5">
-                  <h3 className="font-h3 text-white uppercase tracking-wider">Recent Vehicles</h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left font-body-sm">
-                    <thead className="bg-[#111111] border-b border-white/5">
-                      <tr>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Type</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Power</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {vehicles.slice(0, 5).map((vehicle) => (
-                        <tr key={vehicle._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                          <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
-                          <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
-                          <td className="px-6 py-4 text-white">{vehicle.year}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-label-caps uppercase ${vehicle.type === 'car' ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-500'}`}>
-                              {vehicle.type}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              {/* Overview Tabs (Now moved below charts) */}
+              <div className="mt-8">
+                <Tabs
+                  tabs={[
+                    { id: "users", label: "Recent Users" },
+                    { id: "vehicles", label: "Recent Vehicles" },
+                    { id: "parts", label: "Recent Parts" }
+                  ]}
+                  activeTab={overviewActiveTab}
+                  setActiveTab={setOverviewActiveTab}
+                />
               </div>
 
-              {/* Recent Parts */}
-              <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
-                <div className="p-6 border-b border-white/5">
-                  <h3 className="font-h3 text-white uppercase tracking-wider">Recent Parts</h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left font-body-sm">
-                    <thead className="bg-[#111111] border-b border-white/5">
-                      <tr>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Type</th>
-                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Gain</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {upgrades.slice(0, 5).map((upgrade) => (
-                        <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                          <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
-                          <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
-                          <td className="px-6 py-4 text-white">INR {upgrade.price}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-label-caps uppercase ${upgrade.type === 'car' ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-500'}`}>
-                              {upgrade.type}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-green-500">{upgrade.performanceGain || '-'}</td>
+              {/* Tab Content */}
+              {overviewActiveTab === "users" && (
+                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-body-sm">
+                      <thead className="bg-[#111111] border-b border-white/5">
+                        <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">ID</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Email</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Role</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Joined</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {users.slice(0, 5).map((user) => (
+                          <tr key={user._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-[#C0392B] font-mono">{user._id.slice(-6)}</td>
+                            <td className="px-6 py-4 text-white font-medium">{user.email}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-label-caps uppercase ${user.role === 'admin' ? 'bg-[#C0392B]/10 text-[#C0392B]' : 'bg-zinc-800 text-zinc-400'}`}>
+                                {user.role}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-zinc-400">{new Date(user.createdAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {overviewActiveTab === "vehicles" && (
+                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-body-sm">
+                      <thead className="bg-[#111111] border-b border-white/5">
+                        <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Type</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Power</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {vehicles.slice(0, 5).map((vehicle) => (
+                          <tr key={vehicle._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
+                            <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
+                            <td className="px-6 py-4 text-white">{vehicle.year}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-label-caps uppercase ${vehicle.type === 'car' ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-500'}`}>
+                                {vehicle.type}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {overviewActiveTab === "parts" && (
+                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-body-sm">
+                      <thead className="bg-[#111111] border-b border-white/5">
+                        <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Type</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Gain</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {upgrades.slice(0, 5).map((upgrade) => (
+                          <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
+                            <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
+                            <td className="px-6 py-4 text-white">INR {upgrade.price}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-label-caps uppercase ${upgrade.type === 'car' ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-500'}`}>
+                                {upgrade.type}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-green-500">{upgrade.performanceGain || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -540,7 +847,7 @@ const AdminDashboard = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {users.map((user) => (
+                      {users.slice((userPage - 1) * 10, userPage * 10).map((user) => (
                         <tr key={user._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
                           <td className="px-6 py-4 text-[#C0392B] font-mono">{user._id.slice(-6)}</td>
                           <td className="px-6 py-4 text-white font-medium">{user.email}</td>
@@ -561,6 +868,11 @@ const AdminDashboard = () => {
                     </tbody>
                   </table>
                 </div>
+                <Pagination
+                  currentPage={userPage}
+                  totalPages={Math.ceil(users.length / 10)}
+                  onPageChange={setUserPage}
+                />
               </div>
             </>
           )}
@@ -576,8 +888,100 @@ const AdminDashboard = () => {
                   + Add Vehicle
                 </button>
               </div>
-              {renderVehicleTable(vehicles.filter(v => v.type === 'car'), 'Cars')}
-              {renderVehicleTable(vehicles.filter(v => v.type === 'bike'), 'Bikes')}
+
+              {/* Vehicle Tabs */}
+              <Tabs
+                tabs={[
+                  { id: "cars", label: "Cars" },
+                  { id: "bikes", label: "Bikes" }
+                ]}
+                activeTab={vehicleTab}
+                setActiveTab={setVehicleTab}
+              />
+
+              {/* Cars Tab Content */}
+              {vehicleTab === "cars" && (
+                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-body-sm">
+                      <thead className="bg-[#111111] border-b border-white/5">
+                        <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trim</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Pwr</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {vehicles.filter(v => v.type === 'car').slice((carPage - 1) * 10, carPage * 10).map((vehicle) => (
+                          <tr key={vehicle._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
+                            <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
+                            <td className="px-6 py-4 text-white">{vehicle.year}</td>
+                            <td className="px-6 py-4 text-zinc-400">{vehicle.trim || "-"}</td>
+                            <td className="px-6 py-4 text-white">{vehicle.engine || "-"}</td>
+                            <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : "-"}</td>
+                            <td className="px-6 py-4 flex gap-3">
+                              <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleOpenVehicleModal(vehicle)}>Edit</button>
+                              <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleDeleteVehicle(vehicle._id)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Pagination
+                    currentPage={carPage}
+                    totalPages={Math.ceil(vehicles.filter(v => v.type === 'car').length / 10)}
+                    onPageChange={setCarPage}
+                  />
+                </div>
+              )}
+
+              {/* Bikes Tab Content */}
+              {vehicleTab === "bikes" && (
+                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-body-sm">
+                      <thead className="bg-[#111111] border-b border-white/5">
+                        <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trim</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Pwr</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {vehicles.filter(v => v.type === 'bike').slice((bikePage - 1) * 10, bikePage * 10).map((vehicle) => (
+                          <tr key={vehicle._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
+                            <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
+                            <td className="px-6 py-4 text-white">{vehicle.year}</td>
+                            <td className="px-6 py-4 text-zinc-400">{vehicle.trim || "-"}</td>
+                            <td className="px-6 py-4 text-white">{vehicle.engine || "-"}</td>
+                            <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : "-"}</td>
+                            <td className="px-6 py-4 flex gap-3">
+                              <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleOpenVehicleModal(vehicle)}>Edit</button>
+                              <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleDeleteVehicle(vehicle._id)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Pagination
+                    currentPage={bikePage}
+                    totalPages={Math.ceil(vehicles.filter(v => v.type === 'bike').length / 10)}
+                    onPageChange={setBikePage}
+                  />
+                </div>
+              )}
             </>
           )}
 
@@ -592,8 +996,104 @@ const AdminDashboard = () => {
                   + Add Upgrade
                 </button>
               </div>
-              {renderUpgradeTable(upgrades.filter(u => u.type === 'car'), 'Car Upgrades')}
-              {renderUpgradeTable(upgrades.filter(u => u.type === 'bike'), 'Bike Upgrades')}
+
+              {/* Upgrades Tabs */}
+              <Tabs
+                tabs={[
+                  { id: "carUpgrades", label: "Car Upgrades" },
+                  { id: "bikeUpgrades", label: "Bike Upgrades" }
+                ]}
+                activeTab={upgradeTab}
+                setActiveTab={setUpgradeTab}
+              />
+
+              {/* Car Upgrades Tab Content */}
+              {upgradeTab === "carUpgrades" && (
+                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-body-sm">
+                      <thead className="bg-[#111111] border-b border-white/5">
+                        <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Compatibility</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stage</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Goals</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Gain</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {upgrades.filter(u => u.type === 'car').slice((carUpgradePage - 1) * 10, carUpgradePage * 10).map((upgrade) => (
+                          <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
+                            <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
+                            <td className="px-6 py-4 text-white">INR {upgrade.price}</td>
+                            <td className="px-6 py-4 text-zinc-400">{upgrade.compatibleVehicles.length} vehicle(s)</td>
+                            <td className="px-6 py-4 text-white font-label-caps text-[10px] uppercase">{upgrade.stage || "-"}</td>
+                            <td className="px-6 py-4 text-zinc-400 text-xs">{upgrade.goals?.join(", ") || "-"}</td>
+                            <td className="px-6 py-4 text-green-500">{upgrade.performanceGain || "-"}</td>
+                            <td className="px-6 py-4 flex gap-3">
+                              <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleOpenUpgradeModal(upgrade)}>Edit</button>
+                              <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleDeleteUpgrade(upgrade._id)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Pagination
+                    currentPage={carUpgradePage}
+                    totalPages={Math.ceil(upgrades.filter(u => u.type === 'car').length / 10)}
+                    onPageChange={setCarUpgradePage}
+                  />
+                </div>
+              )}
+
+              {/* Bike Upgrades Tab Content */}
+              {upgradeTab === "bikeUpgrades" && (
+                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-body-sm">
+                      <thead className="bg-[#111111] border-b border-white/5">
+                        <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Compatibility</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stage</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Goals</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Gain</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {upgrades.filter(u => u.type === 'bike').slice((bikeUpgradePage - 1) * 10, bikeUpgradePage * 10).map((upgrade) => (
+                          <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
+                            <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
+                            <td className="px-6 py-4 text-white">INR {upgrade.price}</td>
+                            <td className="px-6 py-4 text-zinc-400">{upgrade.compatibleVehicles.length} vehicle(s)</td>
+                            <td className="px-6 py-4 text-white font-label-caps text-[10px] uppercase">{upgrade.stage || "-"}</td>
+                            <td className="px-6 py-4 text-zinc-400 text-xs">{upgrade.goals?.join(", ") || "-"}</td>
+                            <td className="px-6 py-4 text-green-500">{upgrade.performanceGain || "-"}</td>
+                            <td className="px-6 py-4 flex gap-3">
+                              <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleOpenUpgradeModal(upgrade)}>Edit</button>
+                              <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleDeleteUpgrade(upgrade._id)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Pagination
+                    currentPage={bikeUpgradePage}
+                    totalPages={Math.ceil(upgrades.filter(u => u.type === 'bike').length / 10)}
+                    onPageChange={setBikeUpgradePage}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>
