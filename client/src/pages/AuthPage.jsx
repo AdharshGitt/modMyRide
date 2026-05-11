@@ -8,7 +8,7 @@ import {
   setAuthToken
 } from "../services/api.js";
 
-const HomePage = () => {
+const AuthPage = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -71,12 +71,20 @@ const HomePage = () => {
         const data = await registerUser(email, password, username);
         setAuthToken(data.token);
         setUser(data.user);
-        if (data.user.role === "admin") navigate("/admin");
+        if (data.user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/tuning");
+        }
       } else {
         const data = await loginUser(email, password);
         setAuthToken(data.token);
         setUser(data.user);
-        if (data.user.role === "admin") navigate("/admin");
+        if (data.user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/tuning");
+        }
       }
       setPassword("");
       setConfirmPassword("");
@@ -108,7 +116,7 @@ const HomePage = () => {
 
   if (user) {
     return (
-      <main className="flex h-screen w-full items-center justify-center bg-near-black text-on-surface font-body-md">
+      <main className="flex h-screen w-full items-center justify-center bg-[#1d100e] text-[#f7ddd9] font-body-md">
         <div className="bg-[#1A1A1A] machined-edge p-8 w-full max-w-md flex flex-col gap-6">
           <div className="text-center">
             <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-widest text-sm mb-2">ModMyRide</h2>
@@ -133,6 +141,12 @@ const HomePage = () => {
             >
               Sign out
             </button>
+            <button 
+              onClick={() => navigate("/")} 
+              className="w-full py-3 text-zinc-400 font-label-caps tracking-widest hover:text-white transition-colors uppercase text-xs"
+            >
+              Back to Home
+            </button>
           </div>
         </div>
       </main>
@@ -140,7 +154,7 @@ const HomePage = () => {
   }
 
   return (
-    <main className="flex h-screen w-full items-center justify-center bg-near-black text-on-surface font-body-md px-4">
+    <main className="flex h-screen w-full items-center justify-center bg-[#1d100e] text-[#f7ddd9] font-body-md px-4">
       <div className="bg-[#1A1A1A] machined-edge p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-widest text-sm mb-2">ModMyRide</h2>
@@ -267,9 +281,14 @@ const HomePage = () => {
             </>
           )}
         </p>
+        <div className="mt-4 text-center">
+          <button onClick={() => navigate("/")} className="text-zinc-500 hover:text-white transition-colors text-xs uppercase tracking-widest font-label-caps">
+            Back to Home
+          </button>
+        </div>
       </div>
     </main>
   );
 };
 
-export default HomePage;
+export default AuthPage;

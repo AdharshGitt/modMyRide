@@ -63,6 +63,20 @@ export const updateAdminUser = async (userId, userData) => {
 };
 
 // =======================
+// Public API Functions
+// =======================
+
+export const fetchVehicles = async () => {
+  const { data } = await api.get("/public/vehicles");
+  return data;
+};
+
+export const fetchUpgrades = async () => {
+  const { data } = await api.get("/public/upgrades");
+  return data;
+};
+
+// =======================
 // Vehicle API Functions
 // =======================
 

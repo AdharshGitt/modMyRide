@@ -78,12 +78,12 @@ const AdminDashboard = () => {
 
   // Vehicle Modal State
   const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
-  const [currentVehicle, setCurrentVehicle] = useState({ type: "car", make: "", model: "", year: "", trim: "", engine: "", stockPower: "", imageUrl: "" });
+  const [currentVehicle, setCurrentVehicle] = useState({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", imageUrl: "" });
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
 
   // Upgrade Modal State
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [currentUpgrade, setCurrentUpgrade] = useState({ name: "", type: "car", category: "Engine", price: "", performanceGain: "", imageUrl: "", compatibleVehicles: [], goals: [], stage: "Universal" });
+  const [currentUpgrade, setCurrentUpgrade] = useState({ name: "", type: "car", category: "Engine", price: "", performanceGain: "", imageUrl: "", compatibleVehicles: [], compatibleFuels: [], compatibleTransmissions: [], goals: [], stage: "Universal" });
   const [isEditingUpgrade, setIsEditingUpgrade] = useState(false);
 
   const handleLogout = () => {
@@ -135,7 +135,7 @@ const AdminDashboard = () => {
       setCurrentVehicle(vehicle);
       setIsEditingVehicle(true);
     } else {
-      setCurrentVehicle({ type: "car", make: "", model: "", year: "", trim: "", engine: "", stockPower: "", imageUrl: "" });
+      setCurrentVehicle({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", imageUrl: "" });
       setIsEditingVehicle(false);
     }
     setIsVehicleModalOpen(true);
@@ -178,7 +178,7 @@ const AdminDashboard = () => {
       });
       setIsEditingUpgrade(true);
     } else {
-      setCurrentUpgrade({ name: "", type: "car", category: "Engine", price: "", performanceGain: "", imageUrl: "", compatibleVehicles: [], goals: [], stage: "Universal" });
+      setCurrentUpgrade({ name: "", type: "car", category: "Engine", price: "", performanceGain: "", imageUrl: "", compatibleVehicles: [], compatibleFuels: [], compatibleTransmissions: [], goals: [], stage: "Universal" });
       setIsEditingUpgrade(false);
     }
     setIsUpgradeModalOpen(true);
@@ -220,6 +220,16 @@ const AdminDashboard = () => {
   const handleUpgradeGoalSelection = (e) => {
     const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
     setCurrentUpgrade({...currentUpgrade, goals: selectedOptions});
+  };
+
+  const handleUpgradeFuelSelection = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    setCurrentUpgrade({...currentUpgrade, compatibleFuels: selectedOptions});
+  };
+
+  const handleUpgradeTransmissionSelection = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    setCurrentUpgrade({...currentUpgrade, compatibleTransmissions: selectedOptions});
   };
 
   useEffect(() => {
@@ -926,7 +936,8 @@ const AdminDashboard = () => {
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trim</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Fuel</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trans</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Pwr</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
@@ -938,7 +949,8 @@ const AdminDashboard = () => {
                             <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
                             <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
                             <td className="px-6 py-4 text-white">{vehicle.year}</td>
-                            <td className="px-6 py-4 text-zinc-400">{vehicle.trim || "-"}</td>
+                            <td className="px-6 py-4 text-zinc-400 text-[10px] uppercase font-bold">{vehicle.fuelType || "-"}</td>
+                            <td className="px-6 py-4 text-zinc-400 text-[10px] uppercase font-bold">{vehicle.transmission || "-"}</td>
                             <td className="px-6 py-4 text-white">{vehicle.engine || "-"}</td>
                             <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : "-"}</td>
                             <td className="px-6 py-4 flex gap-3">
@@ -968,7 +980,8 @@ const AdminDashboard = () => {
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trim</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Fuel</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trans</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Pwr</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
@@ -980,7 +993,8 @@ const AdminDashboard = () => {
                             <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
                             <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
                             <td className="px-6 py-4 text-white">{vehicle.year}</td>
-                            <td className="px-6 py-4 text-zinc-400">{vehicle.trim || "-"}</td>
+                            <td className="px-6 py-4 text-zinc-400 text-[10px] uppercase font-bold">{vehicle.fuelType || "-"}</td>
+                            <td className="px-6 py-4 text-zinc-400 text-[10px] uppercase font-bold">{vehicle.transmission || "-"}</td>
                             <td className="px-6 py-4 text-white">{vehicle.engine || "-"}</td>
                             <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : "-"}</td>
                             <td className="px-6 py-4 flex gap-3">
@@ -1220,14 +1234,28 @@ const AdminDashboard = () => {
                   <small className="text-zinc-500 text-xs block">Enter single year (e.g: 2025) or year range (e.g: 2020-2025)</small>
                 </div>
                 <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trim</label>
-                  <input 
-                    type="text" 
-                    value={currentVehicle.trim} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, trim: e.target.value})}
-                    placeholder={currentVehicle.type === 'car' ? "e.g: Manual or Automatic" : "e.g: 2v or 4v"}
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Fuel Type *</label>
+                  <select 
+                    required 
+                    value={currentVehicle.fuelType} 
+                    onChange={(e) => setCurrentVehicle({...currentVehicle, fuelType: e.target.value})}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  />
+                  >
+                    <option value="Petrol">Petrol</option>
+                    <option value="Diesel">Diesel</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Transmission *</label>
+                  <select 
+                    required 
+                    value={currentVehicle.transmission} 
+                    onChange={(e) => setCurrentVehicle({...currentVehicle, transmission: e.target.value})}
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  >
+                    <option value="Manual">Manual</option>
+                    <option value="Automatic">Automatic</option>
+                  </select>
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine</label>
@@ -1321,16 +1349,35 @@ const AdminDashboard = () => {
                   <select 
                     required 
                     value={currentUpgrade.category} 
-                    onChange={(e) => setCurrentUpgrade({...currentUpgrade, category: e.target.value})}
+                    onChange={(e) => {
+                      const newCat = e.target.value;
+                      const mappedGoals = {
+                        "Air Intake": ["Performance", "Better Mileage"],
+                        "Exhaust Systems": ["Performance"],
+                        "ECU & Tuning": ["Performance", "Better Mileage"],
+                        "Suspension": ["Handling"],
+                        "Brakes": ["Handling"],
+                        "Off-Road Accessories": ["Off-Road"],
+                        "Wheels & Tyres": ["Handling", "Off-Road"],
+                        "Lighting": ["Lighting Improvements"]
+                      }[newCat] || [];
+                      
+                      setCurrentUpgrade({
+                        ...currentUpgrade, 
+                        category: newCat,
+                        goals: [...new Set([...currentUpgrade.goals, ...mappedGoals])]
+                      });
+                    }}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   >
-                    <option value="Engine">Engine</option>
-                    <option value="Exhaust">Exhaust</option>
-                    <option value="Suspension">Suspension</option>
-                    <option value="Brakes">Brakes</option>
-                    <option value="Wheels">Wheels</option>
-                    <option value="Aesthetics">Aesthetics</option>
-                    <option value="Lights">Lights</option>
+                    <option value="Air Intake">Air Intake - Performance and Better Mileage</option>
+                    <option value="Exhaust Systems">Exhaust Systems - Performance</option>
+                    <option value="ECU & Tuning">ECU & Tuning - Performance and Better Mileage</option>
+                    <option value="Suspension">Suspension - Handling</option>
+                    <option value="Brakes">Brakes - Handling</option>
+                    <option value="Off-Road Accessories">Off-Road Accessories - Off Road</option>
+                    <option value="Wheels & Tyres">Wheels & Tyres - Handling and Off road</option>
+                    <option value="Lighting">Lighting - Lighting</option>
                   </select>
                 </div>
 
@@ -1406,10 +1453,37 @@ const AdminDashboard = () => {
                     onChange={handleUpgradeGoalSelection}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[120px]"
                   >
-                    <option value="Track Day" className="py-1">Track Day</option>
+                    <option value="Performance" className="py-1">Performance</option>
+                    <option value="Better Mileage" className="py-1">Better Mileage</option>
+                    <option value="Handling" className="py-1">Handling</option>
                     <option value="Off-Road" className="py-1">Off-Road</option>
-                    <option value="Street Performance" className="py-1">Street Performance</option>
-                    <option value="Aesthetics" className="py-1">Aesthetics</option>
+                    <option value="Lighting Improvements" className="py-1">Lighting Improvements</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Compatible Engine Types (Empty = All)</label>
+                  <select 
+                    multiple
+                    value={currentUpgrade.compatibleFuels} 
+                    onChange={handleUpgradeFuelSelection}
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[80px]"
+                  >
+                    <option value="Petrol" className="py-1">Petrol</option>
+                    <option value="Diesel" className="py-1">Diesel</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Compatible Transmissions (Empty = All)</label>
+                  <select 
+                    multiple
+                    value={currentUpgrade.compatibleTransmissions} 
+                    onChange={handleUpgradeTransmissionSelection}
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[80px]"
+                  >
+                    <option value="Manual" className="py-1">Manual</option>
+                    <option value="Automatic" className="py-1">Automatic</option>
                   </select>
                 </div>
 
