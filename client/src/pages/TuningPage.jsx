@@ -53,17 +53,17 @@ const TuningPage = () => {
   }, [filteredVehicles]);
 
   const availableModels = useMemo(() => {
-    return filteredVehicles
+    const models = filteredVehicles
       .filter(v => v.make === selection.brand)
-      .map(v => v.model)
-      .sort();
+      .map(v => v.model);
+    return [...new Set(models)].sort();
   }, [filteredVehicles, selection.brand]);
 
   const availableYears = useMemo(() => {
-    return filteredVehicles
+    const years = filteredVehicles
       .filter(v => v.make === selection.brand && v.model === selection.model)
-      .map(v => v.year)
-      .sort((a, b) => b - a);
+      .map(v => v.year);
+    return [...new Set(years)].sort((a, b) => b - a);
   }, [filteredVehicles, selection.brand, selection.model]);
 
   const availableFuels = useMemo(() => {

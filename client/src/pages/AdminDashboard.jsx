@@ -71,6 +71,25 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const groupedVehicles = useMemo(() => {
+    const groups = {};
+    vehicles.forEach(v => {
+      const key = `${v.type}-${v.make}-${v.model}-${v.year}`;
+      if (!groups[key]) {
+        groups[key] = {
+          _id: key,
+          make: v.make,
+          model: v.model,
+          year: v.year,
+          type: v.type,
+          variants: []
+        };
+      }
+      groups[key].variants.push(v);
+    });
+    return Object.values(groups);
+  }, [vehicles]);
+
   // User Modal State
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState({ _id: "", email: "", role: "user" });
@@ -936,26 +955,62 @@ const AdminDashboard = () => {
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Fuel</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trans</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Pwr</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Available Variants</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engines</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Power</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {vehicles.filter(v => v.type === 'car').slice((carPage - 1) * 10, carPage * 10).map((vehicle) => (
-                          <tr key={vehicle._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                            <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
-                            <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
-                            <td className="px-6 py-4 text-white">{vehicle.year}</td>
-                            <td className="px-6 py-4 text-zinc-400 text-[10px] uppercase font-bold">{vehicle.fuelType || "-"}</td>
-                            <td className="px-6 py-4 text-zinc-400 text-[10px] uppercase font-bold">{vehicle.transmission || "-"}</td>
-                            <td className="px-6 py-4 text-white">{vehicle.engine || "-"}</td>
-                            <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : "-"}</td>
+                        {groupedVehicles.filter(v => v.type === 'car').slice((carPage - 1) * 10, carPage * 10).map((group) => (
+                          <tr key={group._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{group.make}</td>
+                            <td className="px-6 py-4 text-zinc-400">{group.model}</td>
+                            <td className="px-6 py-4 text-white">{group.year}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-wrap gap-1">
+                                {group.variants.map(v => (
+                                  <span key={v._id} className="bg-zinc-800 text-zinc-400 text-[8px] px-2 py-1 uppercase font-bold border border-white/5">
+                                    {v.fuelType.charAt(0)}·{v.transmission === 'Manual' ? 'MT' : 'AT'}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-zinc-400 text-xs">
+                              {[...new Set(group.variants.map(v => v.engine))].join(", ") || "-"}
+                            </td>
+                            <td className="px-6 py-4 text-white font-mono text-xs">
+                              {Math.max(...group.variants.map(v => v.stockPower || 0))} HP
+                            </td>
                             <td className="px-6 py-4 flex gap-3">
-                              <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleOpenVehicleModal(vehicle)}>Edit</button>
-                              <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleDeleteVehicle(vehicle._id)}>Delete</button>
+                              <div className="group relative">
+                                <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase">Edit Variant</button>
+                                <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
+                                  {group.variants.map(v => (
+                                    <button 
+                                      key={v._id}
+                                      onClick={() => handleOpenVehicleModal(v)}
+                                      className="w-full text-left px-4 py-2 text-[10px] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors uppercase border-b border-white/5 last:border-0"
+                                    >
+                                      {v.fuelType} {v.transmission} ({v.engine})
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="group relative">
+                                <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase">Delete</button>
+                                <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
+                                  {group.variants.map(v => (
+                                    <button 
+                                      key={v._id}
+                                      onClick={() => handleDeleteVehicle(v._id)}
+                                      className="w-full text-left px-4 py-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors uppercase border-b border-white/5 last:border-0"
+                                    >
+                                      {v.fuelType} {v.transmission}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -964,7 +1019,7 @@ const AdminDashboard = () => {
                   </div>
                   <Pagination
                     currentPage={carPage}
-                    totalPages={Math.ceil(vehicles.filter(v => v.type === 'car').length / 10)}
+                    totalPages={Math.ceil(groupedVehicles.filter(v => v.type === 'car').length / 10)}
                     onPageChange={setCarPage}
                   />
                 </div>
@@ -980,26 +1035,62 @@ const AdminDashboard = () => {
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Fuel</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trans</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Pwr</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Available Variants</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engines</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Power</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {vehicles.filter(v => v.type === 'bike').slice((bikePage - 1) * 10, bikePage * 10).map((vehicle) => (
-                          <tr key={vehicle._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                            <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
-                            <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
-                            <td className="px-6 py-4 text-white">{vehicle.year}</td>
-                            <td className="px-6 py-4 text-zinc-400 text-[10px] uppercase font-bold">{vehicle.fuelType || "-"}</td>
-                            <td className="px-6 py-4 text-zinc-400 text-[10px] uppercase font-bold">{vehicle.transmission || "-"}</td>
-                            <td className="px-6 py-4 text-white">{vehicle.engine || "-"}</td>
-                            <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : "-"}</td>
+                        {groupedVehicles.filter(v => v.type === 'bike').slice((bikePage - 1) * 10, bikePage * 10).map((group) => (
+                          <tr key={group._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{group.make}</td>
+                            <td className="px-6 py-4 text-zinc-400">{group.model}</td>
+                            <td className="px-6 py-4 text-white">{group.year}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-wrap gap-1">
+                                {group.variants.map(v => (
+                                  <span key={v._id} className="bg-zinc-800 text-zinc-400 text-[8px] px-2 py-1 uppercase font-bold border border-white/5">
+                                    {v.fuelType.charAt(0)}·{v.transmission === 'Manual' ? 'MT' : 'AT'}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-zinc-400 text-xs">
+                              {[...new Set(group.variants.map(v => v.engine))].join(", ") || "-"}
+                            </td>
+                            <td className="px-6 py-4 text-white font-mono text-xs">
+                              {Math.max(...group.variants.map(v => v.stockPower || 0))} HP
+                            </td>
                             <td className="px-6 py-4 flex gap-3">
-                              <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleOpenVehicleModal(vehicle)}>Edit</button>
-                              <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleDeleteVehicle(vehicle._id)}>Delete</button>
+                              <div className="group relative">
+                                <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase">Edit Variant</button>
+                                <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
+                                  {group.variants.map(v => (
+                                    <button 
+                                      key={v._id}
+                                      onClick={() => handleOpenVehicleModal(v)}
+                                      className="w-full text-left px-4 py-2 text-[10px] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors uppercase border-b border-white/5 last:border-0"
+                                    >
+                                      {v.fuelType} {v.transmission} ({v.engine})
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="group relative">
+                                <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase">Delete</button>
+                                <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
+                                  {group.variants.map(v => (
+                                    <button 
+                                      key={v._id}
+                                      onClick={() => handleDeleteVehicle(v._id)}
+                                      className="w-full text-left px-4 py-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors uppercase border-b border-white/5 last:border-0"
+                                    >
+                                      {v.fuelType} {v.transmission}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1008,7 +1099,7 @@ const AdminDashboard = () => {
                   </div>
                   <Pagination
                     currentPage={bikePage}
-                    totalPages={Math.ceil(vehicles.filter(v => v.type === 'bike').length / 10)}
+                    totalPages={Math.ceil(groupedVehicles.filter(v => v.type === 'bike').length / 10)}
                     onPageChange={setBikePage}
                   />
                 </div>
