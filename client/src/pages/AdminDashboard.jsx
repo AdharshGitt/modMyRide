@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Tabs from "../components/Tabs.jsx";
 import Pagination from "../components/Pagination.jsx";
@@ -104,6 +104,19 @@ const AdminDashboard = () => {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [currentUpgrade, setCurrentUpgrade] = useState({ name: "", type: "car", category: "Engine", price: "", performanceGain: "", imageUrl: "", compatibleVehicles: [], compatibleFuels: [], compatibleTransmissions: [], goals: [], stage: "Universal" });
   const [isEditingUpgrade, setIsEditingUpgrade] = useState(false);
+
+  const handleStartTuning = () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) {
+      if (user.role === 'admin') {
+        navigate("/admin");
+      } else {
+        navigate("/tuning");
+      }
+    } else {
+      navigate("/auth");
+    }
+  };
 
   const handleLogout = () => {
     setAuthToken(null);
@@ -261,6 +274,7 @@ const AdminDashboard = () => {
   }, [theme]);
 
   useEffect(() => {
+    document.title = "ModMyRide Admin Dashboard | Performance Tuner";
     const init = async () => {
       try {
         const { user } = await fetchCurrentUser();
@@ -307,97 +321,7 @@ const AdminDashboard = () => {
     );
   }
 
-  const renderVehicleTable = (vehicleList, title) => (
-    <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden mb-8">
-      <div className="p-6 border-b border-white/5">
-        <h3 className="font-h3 text-white uppercase tracking-wider">{title}</h3>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left font-body-sm">
-          <thead className="bg-[#111111] border-b border-white/5">
-            <tr>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Trim</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Pwr</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {vehicleList.length === 0 ? (
-              <tr className="bg-[#111111]">
-                <td colSpan="7" className="px-6 py-8 text-center text-zinc-500 font-label-caps uppercase tracking-widest">No {title.toLowerCase()} found.</td>
-              </tr>
-            ) : (
-              vehicleList.map((vehicle) => (
-                <tr key={vehicle._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                  <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
-                  <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
-                  <td className="px-6 py-4 text-white">{vehicle.year}</td>
-                  <td className="px-6 py-4 text-zinc-400">{vehicle.trim || "-"}</td>
-                  <td className="px-6 py-4 text-white">{vehicle.engine || "-"}</td>
-                  <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : "-"}</td>
-                  <td className="px-6 py-4 flex gap-3">
-                    <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleOpenVehicleModal(vehicle)}>Edit</button>
-                    <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleDeleteVehicle(vehicle._id)}>Delete</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  const renderUpgradeTable = (upgradeList, title) => (
-    <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden mb-8">
-      <div className="p-6 border-b border-white/5">
-        <h3 className="font-h3 text-white uppercase tracking-wider">{title}</h3>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left font-body-sm">
-          <thead className="bg-[#111111] border-b border-white/5">
-            <tr>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Gain</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Compatibility</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stage</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Goals</th>
-              <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {upgradeList.length === 0 ? (
-              <tr className="bg-[#111111]">
-                <td colSpan="8" className="px-6 py-8 text-center text-zinc-500 font-label-caps uppercase tracking-widest">No {title.toLowerCase()} found.</td>
-              </tr>
-            ) : (
-              upgradeList.map((upgrade) => (
-                <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                  <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
-                  <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
-                  <td className="px-6 py-4 text-white">INR {upgrade.price}</td>
-                  <td className="px-6 py-4 text-green-500">{upgrade.performanceGain || "-"}</td>
-                  <td className="px-6 py-4 text-zinc-400">{upgrade.compatibleVehicles.length} vehicle(s)</td>
-                  <td className="px-6 py-4 text-white font-label-caps text-[10px] uppercase">{upgrade.stage || "-"}</td>
-                  <td className="px-6 py-4 text-zinc-400 text-xs">{upgrade.goals?.join(", ") || "-"}</td>
-                  <td className="px-6 py-4 flex gap-3">
-                    <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleOpenUpgradeModal(upgrade)}>Edit</button>
-                    <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase" onClick={() => handleDeleteUpgrade(upgrade._id)}>Delete</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+  // Filter vehicles by the currently selected upgrade type for the modal
 
   // Filter vehicles by the currently selected upgrade type for the modal
   const compatibleVehiclesOptions = vehicles.filter(v => v.type === currentUpgrade.type);
@@ -810,22 +734,22 @@ const AdminDashboard = () => {
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Type</th>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Variants</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Power</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {vehicles.slice(0, 5).map((vehicle) => (
-                          <tr key={vehicle._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                            <td className="px-6 py-4 text-white font-medium">{vehicle.make}</td>
-                            <td className="px-6 py-4 text-zinc-400">{vehicle.model}</td>
-                            <td className="px-6 py-4 text-white">{vehicle.year}</td>
+                        {groupedVehicles.slice(0, 5).map((group) => (
+                          <tr key={group._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{group.make}</td>
+                            <td className="px-6 py-4 text-zinc-400">{group.model}</td>
+                            <td className="px-6 py-4 text-white">{group.year}</td>
                             <td className="px-6 py-4">
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-label-caps uppercase ${vehicle.type === 'car' ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-500'}`}>
-                                {vehicle.type}
+                              <span className="text-[10px] text-zinc-500 uppercase font-bold">
+                                {group.variants.length} Variants
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-white font-mono text-xs">{vehicle.stockPower ? `${vehicle.stockPower} HP` : '-'}</td>
+                            <td className="px-6 py-4 text-white font-mono text-xs">{Math.max(...group.variants.map(v => v.stockPower || 0))} HP</td>
                           </tr>
                         ))}
                       </tbody>
@@ -984,7 +908,13 @@ const AdminDashboard = () => {
                             </td>
                             <td className="px-6 py-4 flex gap-3">
                               <div className="group relative">
-                                <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase">Edit Variant</button>
+                                                                <button 
+                                  onClick={() => handleOpenVehicleModal(group.variants[0])}
+                                  className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase"
+                                >
+                                  {group.variants.length > 1 ? "Edit Variant" : "Edit"}
+                                </button>
+
                                 <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
                                   {group.variants.map(v => (
                                     <button 
@@ -998,7 +928,13 @@ const AdminDashboard = () => {
                                 </div>
                               </div>
                               <div className="group relative">
-                                <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase">Delete</button>
+                                                                <button 
+                                  onClick={() => handleDeleteVehicle(group.variants[0]._id)}
+                                  className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase"
+                                >
+                                  {group.variants.length > 1 ? "Delete Variant" : "Delete"}
+                                </button>
+
                                 <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
                                   {group.variants.map(v => (
                                     <button 
@@ -1064,7 +1000,13 @@ const AdminDashboard = () => {
                             </td>
                             <td className="px-6 py-4 flex gap-3">
                               <div className="group relative">
-                                <button className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase">Edit Variant</button>
+                                                                <button 
+                                  onClick={() => handleOpenVehicleModal(group.variants[0])}
+                                  className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase"
+                                >
+                                  {group.variants.length > 1 ? "Edit Variant" : "Edit"}
+                                </button>
+
                                 <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
                                   {group.variants.map(v => (
                                     <button 
@@ -1078,7 +1020,13 @@ const AdminDashboard = () => {
                                 </div>
                               </div>
                               <div className="group relative">
-                                <button className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase">Delete</button>
+                                                                <button 
+                                  onClick={() => handleDeleteVehicle(group.variants[0]._id)}
+                                  className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase"
+                                >
+                                  {group.variants.length > 1 ? "Delete Variant" : "Delete"}
+                                </button>
+
                                 <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
                                   {group.variants.map(v => (
                                     <button 

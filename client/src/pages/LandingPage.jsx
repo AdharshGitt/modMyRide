@@ -21,7 +21,11 @@ const LandingPage = () => {
 
   const handleStartTuning = () => {
     if (user) {
-      navigate("/tuning");
+      if (user.role === 'admin') {
+        navigate("/admin");
+      } else {
+        navigate("/tuning");
+      }
     } else {
       navigate("/auth");
     }

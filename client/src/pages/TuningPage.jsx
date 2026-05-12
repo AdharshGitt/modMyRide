@@ -22,6 +22,7 @@ const TuningPage = () => {
   });
 
   useEffect(() => {
+    document.title = "ModMyRide | Performance Recommendation";
     const fetchData = async () => {
       try {
         const { user: u } = await fetchCurrentUser();
