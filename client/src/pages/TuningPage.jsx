@@ -1,13 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { fetchCurrentUser, fetchVehicles, fetchUpgrades } from "../services/api.js";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { fetchCurrentUser, fetchVehicles, fetchUpgrades, saveUserProfile, fetchUserProfileById } from "../services/api.js";
 
 const TuningPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const profileId = searchParams.get("profileId");
   const [user, setUser] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [upgrades, setUpgrades] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(1);
   const [selection, setSelection] = useState({
     type: "car",
@@ -35,15 +38,52 @@ const TuningPage = () => {
         
         setVehicles(vData.vehicles || []);
         setUpgrades(uData.upgrades || []);
+
+        // Handle direct profile view
+        if (profileId) {
+          try {
+            const { profile } = await fetchUserProfileById(profileId);
+            if (profile) {
+              setSelection({
+                type: profile.vehicle.type,
+                brand: profile.vehicle.make,
+                model: profile.vehicle.model,
+                year: profile.vehicle.year,
+                fuelType: profile.vehicle.fuelType,
+                transmission: profile.vehicle.transmission,
+                goal: profile.goal,
+                budget: profile.totalBudget,
+                driverName: profile.name
+              });
+              setStep(4);
+            }
+          } catch (err) {
+            console.error("Profile Load Error:", err);
+          }
+        }
       } catch (err) {
         console.error("Fetch Error:", err);
-        // navigate("/auth"); // Only if strictly required
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [navigate]);
+  }, [navigate, profileId]);
+
+
+
+  const handleStartTuning = () => {
+    if (user) {
+      if (user.role === 'admin') {
+        navigate("/admin");
+      } else {
+        setStep(1); // Reset to step 1 if already on tuning page
+        navigate("/tuning");
+      }
+    } else {
+      navigate("/auth");
+    }
+  };
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(v => v.type.toLowerCase() === selection.type.toLowerCase());
@@ -91,6 +131,22 @@ const TuningPage = () => {
     );
   }, [filteredVehicles, selection.brand, selection.model, selection.year, selection.fuelType, selection.transmission]);
 
+  useEffect(() => {
+    if (selection.type === 'bike' && selection.year) {
+      if (availableFuels.length > 0 && !selection.fuelType) {
+        setSelection(s => ({ ...s, fuelType: availableFuels[0] }));
+      }
+    }
+  }, [selection.type, selection.year, availableFuels]);
+
+  useEffect(() => {
+    if (selection.type === 'bike' && selection.fuelType) {
+      if (availableTransmissions.length > 0 && !selection.transmission) {
+        setSelection(s => ({ ...s, transmission: availableTransmissions[0] }));
+      }
+    }
+  }, [selection.type, selection.fuelType, availableTransmissions]);
+
   const recommendedUpgrades = useMemo(() => {
     if (!selectedVehicle) return [];
     
@@ -117,6 +173,32 @@ const TuningPage = () => {
 
   const handleNext = () => setStep(s => s + 1);
   const handleBack = () => setStep(s => s - 1);
+
+  const handleSaveBuild = async () => {
+    if (!selectedVehicle) return;
+    
+    setSaving(true);
+    try {
+      await saveUserProfile({
+        name: selection.driverName || `${selectedVehicle.make} ${selectedVehicle.model} Build`,
+        vehicleId: selectedVehicle._id,
+        upgradeIds: recommendedUpgrades.map(u => u._id),
+        goal: selection.goal,
+        totalBudget: selection.budget,
+        totalCost: totalCost
+      });
+      navigate("/profiles");
+    } catch (err) {
+      console.error("Save Build Error:", err);
+      if (err.response?.status === 401) {
+        navigate("/auth");
+      } else {
+        alert("Failed to save build. Please try again.");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const renderStepper = () => (
     <div className="flex items-center justify-center gap-12 mb-20 relative">
@@ -214,48 +296,66 @@ const TuningPage = () => {
             <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none">expand_more</span>
           </div>
         </div>
-        <div className="space-y-3">
-          <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine Type</label>
-          <div className="relative">
-            <select 
-              className="w-full bg-[#111111] border border-white/10 p-4 text-white outline-none focus:border-[#C0392B] appearance-none"
-              value={selection.fuelType}
-              onChange={(e) => setSelection({...selection, fuelType: e.target.value, transmission: ""})}
-              disabled={!selection.year}
-            >
-              <option value="">Choose Engine</option>
-              {availableFuels.map(fuel => (
-                <option key={fuel} value={fuel}>{fuel}</option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none">expand_more</span>
+
+        {selection.type === 'car' ? (
+          <>
+            <div className="space-y-3">
+              <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine Type</label>
+              <div className="relative">
+                <select 
+                  className="w-full bg-[#111111] border border-white/10 p-4 text-white outline-none focus:border-[#C0392B] appearance-none"
+                  value={selection.fuelType}
+                  onChange={(e) => setSelection({...selection, fuelType: e.target.value, transmission: ""})}
+                  disabled={!selection.year}
+                >
+                  <option value="">Choose Engine</option>
+                  {availableFuels.map(fuel => (
+                    <option key={fuel} value={fuel}>{fuel}</option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none">expand_more</span>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Transmission</label>
+              <div className="relative">
+                <select 
+                  className="w-full bg-[#111111] border border-white/10 p-4 text-white outline-none focus:border-[#C0392B] appearance-none"
+                  value={selection.transmission}
+                  onChange={(e) => setSelection({...selection, transmission: e.target.value})}
+                  disabled={!selection.fuelType}
+                >
+                  <option value="">Choose Transmission</option>
+                  {availableTransmissions.map(trans => (
+                    <option key={trans} value={trans}>{trans}</option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none">expand_more</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="md:col-span-1 flex items-end">
+             <div className="bg-[#C0392B]/5 border border-[#C0392B]/20 p-4 w-full machined-edge flex items-center gap-4">
+                <span className="material-symbols-outlined text-[#C0392B]">info</span>
+                <p className="text-zinc-500 text-[10px] uppercase tracking-widest leading-relaxed">Engine and Transmission for bikes are automatically optimized.</p>
+             </div>
           </div>
-        </div>
-        <div className="space-y-3">
-          <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Transmission</label>
-          <div className="relative">
-            <select 
-              className="w-full bg-[#111111] border border-white/10 p-4 text-white outline-none focus:border-[#C0392B] appearance-none"
-              value={selection.transmission}
-              onChange={(e) => setSelection({...selection, transmission: e.target.value})}
-              disabled={!selection.fuelType}
-            >
-              <option value="">Choose Transmission</option>
-              {availableTransmissions.map(trans => (
-                <option key={trans} value={trans}>{trans}</option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none">expand_more</span>
-          </div>
-        </div>
+        )}
       </div>
 
       <button
-        onClick={handleNext}
-        disabled={!selection.brand || !selection.model || !selection.year || !selection.fuelType || !selection.transmission}
-        className={`w-full py-6 font-['Oswald'] font-bold uppercase tracking-[0.2em] transition-all machined-edge ${(!selection.brand || !selection.model || !selection.year || !selection.fuelType || !selection.transmission) ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-[#C0392B] text-white hover:bg-[#a93226] hover:shadow-[0_0_30px_rgba(192,57,43,0.3)]'}`}
+        onClick={() => {
+          if (selection.type === 'bike') {
+            setStep(4);
+          } else {
+            handleNext();
+          }
+        }}
+        disabled={!selection.brand || !selection.model || !selection.year || (selection.type === 'car' && (!selection.fuelType || !selection.transmission))}
+        className={`w-full py-6 font-['Oswald'] font-bold uppercase tracking-[0.2em] transition-all machined-edge ${(!selection.brand || !selection.model || !selection.year || (selection.type === 'car' && (!selection.fuelType || !selection.transmission))) ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-[#C0392B] text-white hover:bg-[#a93226] hover:shadow-[0_0_30px_rgba(192,57,43,0.3)]'}`}
       >
-        Continue to Goals
+        {selection.type === 'bike' ? 'Get Recommendation' : 'Next Step'}
       </button>
     </div>
   );
@@ -433,7 +533,13 @@ const TuningPage = () => {
               <h2 className="text-white font-['Oswald'] text-4xl font-bold uppercase">₹{totalCost.toLocaleString()}</h2>
             </div>
             <div className="flex gap-4 px-8 pb-6 sm:pb-0">
-              <button className="px-8 py-3 bg-white text-[#1d100e] font-['Oswald'] font-bold uppercase text-xs tracking-widest hover:bg-white/90 transition-all">Save Build</button>
+              <button 
+                onClick={handleSaveBuild}
+                disabled={saving}
+                className="px-8 py-3 bg-white text-[#1d100e] font-['Oswald'] font-bold uppercase text-xs tracking-widest hover:bg-white/90 transition-all disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Build'}
+              </button>
               <button className="px-8 py-3 bg-[#1d100e] text-white font-['Oswald'] font-bold uppercase text-xs tracking-widest hover:bg-black transition-all">Connect to Tuner</button>
             </div>
           </div>
@@ -449,13 +555,7 @@ const TuningPage = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#1d100e] flex items-center justify-center">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-[#1d100e] text-[#f7ddd9] font-body-md overflow-x-hidden">
@@ -469,59 +569,71 @@ const TuningPage = () => {
         </div>
         
         <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => navigate("/")} className="font-['Oswald'] uppercase tracking-widest text-[10px] text-zinc-400 hover:text-white transition-colors">Home</button>
-          <button className="font-['Oswald'] uppercase tracking-widest text-[10px] text-[#C0392B] transition-colors border-b-2 border-[#C0392B] pb-1">Recommend</button>
-          <button className="font-['Oswald'] uppercase tracking-widest text-[10px] text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
+          <button onClick={() => navigate("/")} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Home</button>
+          <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-xs text-white hover:text-[#C0392B] transition-colors">Recommendation</button>
+          <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
         </div>
 
-        <div className="flex items-center gap-6">
-           <button onClick={() => navigate("/auth")} className="font-['Oswald'] uppercase tracking-widest text-[10px] text-zinc-400 hover:text-white transition-colors">Login</button>
-           <button onClick={() => navigate("/auth")} className="bg-[#C0392B] text-white px-5 py-2 font-['Oswald'] uppercase tracking-widest text-[10px] hover:bg-[#a93226] transition-all">Register</button>
-        </div>
+        <button 
+          onClick={handleStartTuning}
+          className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
+        >
+          {user ? 'Dashboard' : 'Get Started'}
+        </button>
       </nav>
 
-      <main className="pt-32 pb-24 px-8 md:px-16 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-           <h1 className="text-5xl md:text-6xl font-['Oswald'] font-black uppercase text-white tracking-tighter mb-12">Performance Recommendation</h1>
-           {renderStepper()}
-        </div>
+      <main className="pt-32 pb-24 px-8 md:px-16 max-w-7xl mx-auto min-h-[60vh]">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 animate-pulse">
+            <div className="w-12 h-12 border-2 border-[#C0392B] border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="font-['Oswald'] uppercase tracking-[0.2em] text-xs text-zinc-600">Initializing Engine...</p>
+          </div>
+        ) : (
+          <>
+            <div className="text-center mb-16">
+               <h1 className="text-5xl md:text-6xl font-['Oswald'] font-black uppercase text-white tracking-tighter mb-12">Performance Recommendation</h1>
+               {renderStepper()}
+            </div>
 
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
-        {step === 4 && renderResults()}
+            {step === 1 && renderStep1()}
+            {step === 2 && renderStep2()}
+            {step === 3 && renderStep3()}
+            {step === 4 && renderResults()}
+          </>
+        )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#170b09] border-t border-white/5 py-20 px-8 md:px-16">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
-          <div>
-            <h2 className="font-['Oswald'] text-xl font-black tracking-tighter uppercase text-white mb-6">ModMyRide</h2>
-            <p className="text-zinc-600 text-[10px] leading-relaxed mb-8">
-              © 2024 MODMYRIDE. Engineered for the Indian Market. Precision tuning and performance optimization for enthusiasts.
+      <footer className="bg-[#170b09] border-t border-white/5 py-16 px-8 md:px-16">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          <div className="col-span-1 lg:col-span-1">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-6 h-6 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
+                <span className="material-symbols-outlined text-white -rotate-45 text-xs">speed</span>
+              </div>
+              <span className="font-['Oswald'] text-xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
+            </div>
+            <p className="text-zinc-500 text-sm mb-6">
+              The definitive tuning platform for the modern Indian motorist. Precision engineered for performance enthusiasts.
             </p>
           </div>
+
           <div>
-             <h4 className="font-['Oswald'] uppercase tracking-widest text-[10px] text-white mb-8">Platform</h4>
-             <ul className="space-y-4">
-                <li><button className="text-zinc-600 hover:text-[#C0392B] text-[10px] uppercase font-bold transition-colors">About Us</button></li>
-                <li><button className="text-zinc-600 hover:text-[#C0392B] text-[10px] uppercase font-bold transition-colors">Performance Guide</button></li>
-             </ul>
+            <h4 className="font-['Oswald'] uppercase tracking-widest text-xs text-white mb-6">Explore</h4>
+            <ul className="space-y-4">
+              <li><button onClick={() => navigate("/")} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">About Us</button></li>
+              <li><button onClick={() => navigate("/")} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Performance Guide</button></li>
+              <li><button onClick={handleStartTuning} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Recommendations</button></li>
+            </ul>
           </div>
-          <div>
-             <h4 className="font-['Oswald'] uppercase tracking-widest text-[10px] text-white mb-8">Legal</h4>
-             <ul className="space-y-4">
-                <li><button className="text-zinc-600 hover:text-[#C0392B] text-[10px] uppercase font-bold transition-colors">Privacy</button></li>
-                <li><button className="text-zinc-600 hover:text-[#C0392B] text-[10px] uppercase font-bold transition-colors">Terms</button></li>
-             </ul>
-          </div>
-          <div>
-             <h4 className="font-['Oswald'] uppercase tracking-widest text-[10px] text-white mb-8">Newsletter</h4>
-             <div className="flex">
-                <input type="email" placeholder="Your email" className="bg-[#111111] border border-white/5 px-4 py-3 text-white text-[10px] w-full outline-none focus:border-[#C0392B]" />
-                <button className="bg-[#C0392B] text-white px-4 py-3 font-['Oswald'] font-bold text-[10px] uppercase">Join</button>
-             </div>
-          </div>
+
+          <div></div>
+          <div></div>
+        </div>
+        <div className="pt-8 border-t border-white/5 text-center">
+          <p className="text-zinc-600 text-[10px] uppercase tracking-widest font-['Oswald']">
+            © 2024 MODMYRIDE. Engineered for the Indian Market.
+          </p>
         </div>
       </footer>
     </div>

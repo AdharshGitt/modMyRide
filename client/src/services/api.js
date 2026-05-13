@@ -124,4 +124,28 @@ export const deleteAdminUpgrade = async (id) => {
   return data;
 };
 
+// =======================
+// User Profile API Functions
+// =======================
+
+export const saveUserProfile = async (profileData) => {
+  const { data } = await api.post("/profiles", profileData);
+  return data;
+};
+
+export const fetchUserProfiles = async () => {
+  const { data } = await api.get("/profiles");
+  return data;
+};
+
+export const fetchUserProfileById = async (id) => {
+  const { data } = await api.get(`/profiles/${id}`);
+  return data;
+};
+
+export const deleteUserProfile = async (id) => {
+  const { data } = await api.delete(`/profiles/${id}`);
+  return data;
+};
+
 export default api;

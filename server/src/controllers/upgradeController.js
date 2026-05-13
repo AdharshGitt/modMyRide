@@ -1,5 +1,7 @@
 import Upgrade from "../models/Upgrade.js";
 
+import Vehicle from "../models/Vehicle.js";
+
 // @desc    Get all upgrades
 // @route   GET /api/admin/upgrades
 // @access  Private/Admin
@@ -17,7 +19,12 @@ export const getUpgrades = async (req, res) => {
 // @access  Private/Admin
 export const createUpgrade = async (req, res) => {
   try {
-    const upgrade = await Upgrade.create(req.body);
+    const payload = { ...req.body };
+    if (!payload.compatibleVehicles || payload.compatibleVehicles.length === 0) {
+      const vehicles = await Vehicle.find({ type: payload.type }).select("_id");
+      payload.compatibleVehicles = vehicles.map(v => v._id);
+    }
+    const upgrade = await Upgrade.create(payload);
     const populated = await Upgrade.findById(upgrade._id).populate("compatibleVehicles");
     res.status(201).json({ upgrade: populated });
   } catch (err) {
@@ -30,7 +37,12 @@ export const createUpgrade = async (req, res) => {
 // @access  Private/Admin
 export const updateUpgrade = async (req, res) => {
   try {
-    const upgrade = await Upgrade.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).populate("compatibleVehicles");
+    const payload = { ...req.body };
+    if (!payload.compatibleVehicles || payload.compatibleVehicles.length === 0) {
+      const vehicles = await Vehicle.find({ type: payload.type }).select("_id");
+      payload.compatibleVehicles = vehicles.map(v => v._id);
+    }
+    const upgrade = await Upgrade.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true }).populate("compatibleVehicles");
     if (!upgrade) {
       return res.status(404).json({ message: "Upgrade not found" });
     }

@@ -2,27 +2,27 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Tabs from "../components/Tabs.jsx";
 import Pagination from "../components/Pagination.jsx";
-import { 
-  ResponsiveContainer, 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   Legend,
   Label
 } from 'recharts';
-import { 
-  fetchAdminUsers, 
-  fetchAdminStats, 
-  fetchCurrentUser, 
-  setAuthToken, 
+import {
+  fetchAdminUsers,
+  fetchAdminStats,
+  fetchCurrentUser,
+  setAuthToken,
   deleteAdminUser,
   updateAdminUser,
   fetchAdminVehicles,
@@ -56,9 +56,9 @@ const AdminDashboard = () => {
   const [upgradeTab, setUpgradeTab] = useState("carUpgrades");
   const [carUpgradePage, setCarUpgradePage] = useState(1);
   const [bikeUpgradePage, setBikeUpgradePage] = useState(1);
-  const [stats, setStats] = useState({ 
-    totalUsers: 0, 
-    adminUsers: 0, 
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    adminUsers: 0,
     regularUsers: 0,
     vehicleDistribution: { cars: 0, bikes: 0 },
     partsActivity: [],
@@ -97,13 +97,61 @@ const AdminDashboard = () => {
 
   // Vehicle Modal State
   const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
-  const [currentVehicle, setCurrentVehicle] = useState({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", imageUrl: "" });
+  const [currentVehicle, setCurrentVehicle] = useState({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "" });
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
 
   // Upgrade Modal State
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [currentUpgrade, setCurrentUpgrade] = useState({ name: "", type: "car", category: "Engine", price: "", performanceGain: "", imageUrl: "", compatibleVehicles: [], compatibleFuels: [], compatibleTransmissions: [], goals: [], stage: "Universal" });
+  const [currentUpgrade, setCurrentUpgrade] = useState({ name: "", type: "car", category: "Air Intake", price: "", performanceGain: "", mileage: "", torque: "", compatibleVehicles: [], goals: [], stage: "Universal" });
   const [isEditingUpgrade, setIsEditingUpgrade] = useState(false);
+  const [expandedModels, setExpandedModels] = useState([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [vehicleSearch, setVehicleSearch] = useState("");
+  const [upgradeSearch, setUpgradeSearch] = useState("");
+
+  const filteredUsers = useMemo(() => {
+    return users
+      .filter(user => 
+        user.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+        user._id.toLowerCase().includes(userSearch.toLowerCase())
+      )
+      .sort((a, b) => {
+        if (a.role === 'admin' && b.role !== 'admin') return -1;
+        if (a.role !== 'admin' && b.role === 'admin') return 1;
+        return 0;
+      });
+  }, [users, userSearch]);
+
+  const filteredGroupedVehicles = useMemo(() => {
+    return groupedVehicles.filter(v => 
+      v.make.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
+      v.model.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
+      v.year.toString().includes(vehicleSearch)
+    );
+  }, [groupedVehicles, vehicleSearch]);
+
+  const filteredUpgrades = useMemo(() => {
+    return upgrades.filter(u => 
+      u.name.toLowerCase().includes(upgradeSearch.toLowerCase()) ||
+      u.category.toLowerCase().includes(upgradeSearch.toLowerCase())
+    );
+  }, [upgrades, upgradeSearch]);
+
+  // Filter vehicles by the currently selected upgrade type for the modal
+  const compatibleVehiclesOptions = useMemo(() => 
+    vehicles.filter(v => v.type === currentUpgrade.type),
+    [vehicles, currentUpgrade.type]
+  );
+
+  const groupedCompatibleVehicles = useMemo(() => {
+    const groups = {};
+    compatibleVehiclesOptions.forEach(v => {
+      const key = `${v.make} ${v.model}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(v);
+    });
+    return groups;
+  }, [compatibleVehiclesOptions]);
 
   const handleStartTuning = () => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -167,7 +215,7 @@ const AdminDashboard = () => {
       setCurrentVehicle(vehicle);
       setIsEditingVehicle(true);
     } else {
-      setCurrentVehicle({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", imageUrl: "" });
+      setCurrentVehicle({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "" });
       setIsEditingVehicle(false);
     }
     setIsVehicleModalOpen(true);
@@ -178,11 +226,17 @@ const AdminDashboard = () => {
   const handleVehicleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const dataToSave = { ...currentVehicle };
+      if (dataToSave.type === 'bike') {
+        delete dataToSave.fuelType;
+        delete dataToSave.transmission;
+      }
+
       if (isEditingVehicle) {
-        const updated = await updateAdminVehicle(currentVehicle._id, currentVehicle);
+        const updated = await updateAdminVehicle(currentVehicle._id, dataToSave);
         setVehicles(vehicles.map(v => v._id === updated.vehicle._id ? updated.vehicle : v));
       } else {
-        const created = await createAdminVehicle(currentVehicle);
+        const created = await createAdminVehicle(dataToSave);
         setVehicles([created.vehicle, ...vehicles]);
       }
       handleCloseVehicleModal();
@@ -210,7 +264,7 @@ const AdminDashboard = () => {
       });
       setIsEditingUpgrade(true);
     } else {
-      setCurrentUpgrade({ name: "", type: "car", category: "Engine", price: "", performanceGain: "", imageUrl: "", compatibleVehicles: [], compatibleFuels: [], compatibleTransmissions: [], goals: [], stage: "Universal" });
+      setCurrentUpgrade({ name: "", type: "car", category: "Air Intake", price: "", performanceGain: "", mileage: "", torque: "", compatibleVehicles: [], compatibleFuels: [], compatibleTransmissions: [], goals: [], stage: "Universal" });
       setIsEditingUpgrade(false);
     }
     setIsUpgradeModalOpen(true);
@@ -244,26 +298,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleUpgradeVehicleSelection = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    setCurrentUpgrade({...currentUpgrade, compatibleVehicles: selectedOptions});
-  };
-
-  const handleUpgradeGoalSelection = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    setCurrentUpgrade({...currentUpgrade, goals: selectedOptions});
-  };
-
-  const handleUpgradeFuelSelection = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    setCurrentUpgrade({...currentUpgrade, compatibleFuels: selectedOptions});
-  };
-
-  const handleUpgradeTransmissionSelection = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    setCurrentUpgrade({...currentUpgrade, compatibleTransmissions: selectedOptions});
-  };
-
+  // Selection handlers removed as inline functions are now used with checkboxes/radios
   useEffect(() => {
     localStorage.setItem("modmyride_theme", theme);
     if (theme === "light") {
@@ -289,7 +324,7 @@ const AdminDashboard = () => {
           fetchAdminVehicles(),
           fetchAdminUpgrades()
         ]);
-        
+
         setUsers(usersData.users);
         setStats(statsData);
         setVehicles(vehiclesData.vehicles);
@@ -321,11 +356,6 @@ const AdminDashboard = () => {
     );
   }
 
-  // Filter vehicles by the currently selected upgrade type for the modal
-
-  // Filter vehicles by the currently selected upgrade type for the modal
-  const compatibleVehiclesOptions = vehicles.filter(v => v.type === currentUpgrade.type);
-
   return (
     <div className="flex h-screen w-full bg-near-black text-on-surface font-body-md overflow-hidden">
       {/* SideNavBar */}
@@ -334,28 +364,28 @@ const AdminDashboard = () => {
           <div className="text-xl font-black text-white font-['Oswald'] uppercase tracking-tight">ADMIN DASHBOARD</div>
         </div>
         <nav className="flex-1 space-y-2">
-          <button 
+          <button
             onClick={() => setActiveTab("overview")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight ${activeTab === "overview" ? "bg-[#C0392B] text-white shadow-lg" : "text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424]"}`}
           >
             <span className="material-symbols-outlined" data-icon="dashboard">dashboard</span>
             <span>Dashboard</span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("users")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight ${activeTab === "users" ? "bg-[#C0392B] text-white shadow-lg" : "text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424]"}`}
           >
             <span className="material-symbols-outlined" data-icon="people">people</span>
             <span>User Management</span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("vehicles")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight ${activeTab === "vehicles" ? "bg-[#C0392B] text-white shadow-lg" : "text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424]"}`}
           >
             <span className="material-symbols-outlined" data-icon="directions_car">directions_car</span>
             <span>Vehicles</span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("upgrades")}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight ${activeTab === "upgrades" ? "bg-[#C0392B] text-white shadow-lg" : "text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424]"}`}
           >
@@ -363,12 +393,12 @@ const AdminDashboard = () => {
             <span>Parts Catalog</span>
           </button>
         </nav>
-        <div className="mt-auto border-t border-white/5 pt-4">
+        {/* <div className="mt-auto border-t border-white/5 pt-4">
           <button onClick={handleLogout} className="w-full text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight">
             <span className="material-symbols-outlined" data-icon="logout">logout</span>
             <span>Logout</span>
           </button>
-        </div>
+        </div> */}
       </aside>
 
       {/* Main Content Area */}
@@ -379,7 +409,7 @@ const AdminDashboard = () => {
             <h1 className="text-2xl font-bold text-[#C0392B] font-['Oswald'] uppercase tracking-tighter">MODMYRIDE</h1>
           </div>
           <div className="flex items-center gap-4 relative">
-            <button 
+            <button
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
               className="h-9 w-9 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden hover:border-[#C0392B] transition-all group"
             >
@@ -392,14 +422,14 @@ const AdminDashboard = () => {
                   <p className="font-['Oswald'] text-white uppercase text-xs tracking-widest mb-1">{adminProfile.username || 'Admin User'}</p>
                   <p className="text-zinc-500 text-[10px] truncate">{adminProfile.email}</p>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-zinc-400">
                       <span className="material-symbols-outlined text-sm">{theme === 'dark' ? 'dark_mode' : 'light_mode'}</span>
                       <span className="text-[11px] uppercase font-label-caps tracking-wider">Appearance</span>
                     </div>
-                    <button 
+                    <button
                       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                       className="w-10 h-5 rounded-full bg-zinc-800 relative p-1 transition-colors"
                     >
@@ -409,7 +439,7 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="border-t border-white/5 pt-4">
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2 text-[#C0392B] hover:bg-[#C0392B]/10 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
                   >
@@ -480,201 +510,201 @@ const AdminDashboard = () => {
 
               {/* Charts Section */}
               <div className="space-y-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* User Growth Chart */}
-                    <div className="bg-[#1A1A1A] machined-edge p-6">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-h3 text-white uppercase tracking-wider text-sm">User Growth <span className="text-[10px] text-zinc-500 font-normal ml-2">(New users over time)</span></h3>
-                        <div className="relative flex items-center group">
-                          <select 
-                            value={growthTimeframe}
-                            onChange={(e) => setGrowthTimeframe(e.target.value)}
-                            className="appearance-none bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] pl-3 pr-8 py-1.5 rounded-none outline-none font-label-caps cursor-pointer hover:border-[#C0392B]/50 transition-all"
-                            style={{ 
-                              backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='${isLight ? '%23475569' : '%23666'}'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")`,
-                              backgroundRepeat: 'no-repeat',
-                              backgroundPosition: 'right 0.5rem center',
-                              backgroundSize: '1em'
-                            }}
-                          >
-                            <option value="6m">Last 6 Months</option>
-                            <option value="12m">Last 12 Months</option>
-                            <option value="all">All Time</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={stats.userGrowth}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
-                            <XAxis 
-                              dataKey="month" 
-                              stroke={chartTextColor} 
-                              fontSize={10} 
-                              tickLine={false} 
-                              axisLine={false}
-                              dy={10}
-                            />
-                            <YAxis 
-                              stroke={chartTextColor} 
-                              fontSize={10} 
-                              tickLine={false} 
-                              axisLine={false}
-                              dx={-10}
-                            />
-                            <Tooltip 
-                              contentStyle={{ backgroundColor: isLight ? '#fff' : '#111', border: `1px solid ${isLight ? '#e2e8f0' : '#333'}`, fontSize: '12px', color: isLight ? '#0f172a' : '#fff' }}
-                              itemStyle={{ color: '#C0392B' }}
-                            />
-                            <Line 
-                              type="monotone" 
-                              dataKey="count" 
-                              name="Users Joined"
-                              stroke="#C0392B" 
-                              strokeWidth={3} 
-                              dot={{ r: 4, fill: '#C0392B', strokeWidth: 0 }}
-                              activeDot={{ r: 6, fill: '#fff', stroke: '#C0392B', strokeWidth: 2 }}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* User Growth Chart */}
+                  <div className="bg-[#1A1A1A] machined-edge p-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="font-h3 text-white uppercase tracking-wider text-sm">User Growth <span className="text-[10px] text-zinc-500 font-normal ml-2">(New users over time)</span></h3>
+                      <div className="relative flex items-center group">
+                        <select
+                          value={growthTimeframe}
+                          onChange={(e) => setGrowthTimeframe(e.target.value)}
+                          className="appearance-none bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] pl-3 pr-8 py-1.5 rounded-none outline-none font-label-caps cursor-pointer hover:border-[#C0392B]/50 transition-all"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='${isLight ? '%23475569' : '%23666'}'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'right 0.5rem center',
+                            backgroundSize: '1em'
+                          }}
+                        >
+                          <option value="6m">Last 6 Months</option>
+                          <option value="12m">Last 12 Months</option>
+                          <option value="all">All Time</option>
+                        </select>
                       </div>
                     </div>
-
-                    {/* Vehicle Distribution Chart */}
-                    <div className="bg-[#1A1A1A] machined-edge p-6">
-                      <h3 className="font-h3 text-white uppercase tracking-wider text-sm mb-6">Vehicles</h3>
-                      <div className="h-[250px] w-full flex items-center justify-center relative">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'Cars', value: stats.vehicleDistribution.cars },
-                                { name: 'Bikes', value: stats.vehicleDistribution.bikes }
-                              ]}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={75}
-                              outerRadius={90}
-                              paddingAngle={4}
-                              dataKey="value"
-                              stroke="none"
-                              cornerRadius={4}
-                            >
-                              <Cell fill="#C0392B" />
-                              <Cell fill="#27272a" />
-                              <Label 
-                                content={({ viewBox }) => {
-                                  const { cx, cy } = viewBox;
-                                  return (
-                                    <g>
-                                      <text x={cx} y={cy - 10} textAnchor="middle">
-                                        <tspan 
-                                          x={cx} 
-                                          dy="-2" 
-                                          fill={isLight ? "#0f172a" : "#fff"} 
-                                          fontSize="38" 
-                                          fontWeight="bold" 
-                                          style={{ fontFamily: 'Oswald' }}
-                                        >
-                                          {stats.vehicleDistribution.cars + stats.vehicleDistribution.bikes}
-                                        </tspan>
-                                        <tspan 
-                                          x={cx} 
-                                          dy="22" 
-                                          fill="#71717a" 
-                                          fontSize="9" 
-                                          fontWeight="600" 
-                                          style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}
-                                        >
-                                          ACTIVE UNITS
-                                        </tspan>
-                                      </text>
-                                    </g>
-                                  );
-                                }}
-                              />
-                            </Pie>
-                            <Tooltip 
-                              contentStyle={{ backgroundColor: isLight ? '#fff' : '#111', border: `1px solid ${isLight ? '#e2e8f0' : '#333'}`, fontSize: '12px', color: isLight ? '#0f172a' : '#fff' }}
-                            />
-                            <Legend 
-                              verticalAlign="bottom" 
-                              align="center" 
-                              iconType="circle"
-                              wrapperStyle={{ paddingTop: '20px' }}
-                              formatter={(value) => (
-                                <span className="text-zinc-500 text-[11px] uppercase font-label-caps tracking-wider ml-1">
-                                  {value}
-                                </span>
-                              )}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
+                    <div className="h-[250px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={stats.userGrowth}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
+                          <XAxis
+                            dataKey="month"
+                            stroke={chartTextColor}
+                            fontSize={10}
+                            tickLine={false}
+                            axisLine={false}
+                            dy={10}
+                          />
+                          <YAxis
+                            stroke={chartTextColor}
+                            fontSize={10}
+                            tickLine={false}
+                            axisLine={false}
+                            dx={-10}
+                          />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: isLight ? '#fff' : '#111', border: `1px solid ${isLight ? '#e2e8f0' : '#333'}`, fontSize: '12px', color: isLight ? '#0f172a' : '#fff' }}
+                            itemStyle={{ color: '#C0392B' }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="count"
+                            name="Users Joined"
+                            stroke="#C0392B"
+                            strokeWidth={3}
+                            dot={{ r: 4, fill: '#C0392B', strokeWidth: 0 }}
+                            activeDot={{ r: 6, fill: '#fff', stroke: '#C0392B', strokeWidth: 2 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
-
-                    {/* Parts Catalog Activity Chart */}
-                    <div className="bg-[#1A1A1A] machined-edge p-6">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-h3 text-white uppercase tracking-wider text-sm">Parts Category</h3>
-                        <div className="relative flex items-center group">
-                          <select 
-                            value={partsTimeframe}
-                            onChange={(e) => setPartsTimeframe(e.target.value)}
-                            className="appearance-none bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] pl-3 pr-8 py-1.5 rounded-none outline-none font-label-caps cursor-pointer hover:border-[#C0392B]/50 transition-all"
-                            style={{ 
-                              backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='${isLight ? '%23475569' : '%23666'}'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")`,
-                              backgroundRepeat: 'no-repeat',
-                              backgroundPosition: 'right 0.5rem center',
-                              backgroundSize: '1em'
-                            }}
-                          >
-                            <option value="month">This Month</option>
-                            <option value="quarter">This Quarter</option>
-                            <option value="year">This Year</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={stats.partsActivity}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
-                            <XAxis 
-                              dataKey="category" 
-                              stroke={chartTextColor} 
-                              fontSize={8} 
-                              tickLine={false} 
-                              axisLine={false}
-                              interval={0}
-                              angle={-45}
-                              textAnchor="end"
-                              height={60}
-                            />
-                            <YAxis 
-                              stroke={chartTextColor} 
-                              fontSize={10} 
-                              tickLine={false} 
-                              axisLine={false}
-                              dx={-10}
-                            />
-                            <Tooltip 
-                              cursor={{ fill: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.05)' }}
-                              contentStyle={{ backgroundColor: isLight ? '#fff' : '#111', border: `1px solid ${isLight ? '#e2e8f0' : '#333'}`, fontSize: '12px', color: isLight ? '#0f172a' : '#fff' }}
-                            />
-                            <Bar 
-                              dataKey="count" 
-                              name="Parts Added"
-                              fill="#C0392B" 
-                              radius={[4, 4, 0, 0]}
-                              barSize={30}
-                            />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
                   </div>
+
+                  {/* Vehicle Distribution Chart */}
+                  <div className="bg-[#1A1A1A] machined-edge p-6">
+                    <h3 className="font-h3 text-white uppercase tracking-wider text-sm mb-6">Vehicles</h3>
+                    <div className="h-[250px] w-full flex items-center justify-center relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Cars', value: stats.vehicleDistribution.cars },
+                              { name: 'Bikes', value: stats.vehicleDistribution.bikes }
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={75}
+                            outerRadius={90}
+                            paddingAngle={4}
+                            dataKey="value"
+                            stroke="none"
+                            cornerRadius={4}
+                          >
+                            <Cell fill="#C0392B" />
+                            <Cell fill="#27272a" />
+                            <Label
+                              content={({ viewBox }) => {
+                                const { cx, cy } = viewBox;
+                                return (
+                                  <g>
+                                    <text x={cx} y={cy - 10} textAnchor="middle">
+                                      <tspan
+                                        x={cx}
+                                        dy="-2"
+                                        fill={isLight ? "#0f172a" : "#fff"}
+                                        fontSize="38"
+                                        fontWeight="bold"
+                                        style={{ fontFamily: 'Oswald' }}
+                                      >
+                                        {stats.vehicleDistribution.cars + stats.vehicleDistribution.bikes}
+                                      </tspan>
+                                      <tspan
+                                        x={cx}
+                                        dy="22"
+                                        fill="#71717a"
+                                        fontSize="9"
+                                        fontWeight="600"
+                                        style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                                      >
+                                        ACTIVE UNITS
+                                      </tspan>
+                                    </text>
+                                  </g>
+                                );
+                              }}
+                            />
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{ backgroundColor: isLight ? '#fff' : '#111', border: `1px solid ${isLight ? '#e2e8f0' : '#333'}`, fontSize: '12px', color: isLight ? '#0f172a' : '#fff' }}
+                          />
+                          <Legend
+                            verticalAlign="bottom"
+                            align="center"
+                            iconType="circle"
+                            wrapperStyle={{ paddingTop: '20px' }}
+                            formatter={(value) => (
+                              <span className="text-zinc-500 text-[11px] uppercase font-label-caps tracking-wider ml-1">
+                                {value}
+                              </span>
+                            )}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Parts Catalog Activity Chart */}
+                  <div className="bg-[#1A1A1A] machined-edge p-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="font-h3 text-white uppercase tracking-wider text-sm">Parts Category</h3>
+                      <div className="relative flex items-center group">
+                        <select
+                          value={partsTimeframe}
+                          onChange={(e) => setPartsTimeframe(e.target.value)}
+                          className="appearance-none bg-zinc-900 border border-white/5 text-zinc-400 text-[10px] pl-3 pr-8 py-1.5 rounded-none outline-none font-label-caps cursor-pointer hover:border-[#C0392B]/50 transition-all"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='${isLight ? '%23475569' : '%23666'}'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'right 0.5rem center',
+                            backgroundSize: '1em'
+                          }}
+                        >
+                          <option value="month">This Month</option>
+                          <option value="quarter">This Quarter</option>
+                          <option value="year">This Year</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="h-[250px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats.partsActivity}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
+                          <XAxis
+                            dataKey="category"
+                            stroke={chartTextColor}
+                            fontSize={8}
+                            tickLine={false}
+                            axisLine={false}
+                            interval={0}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
+                          />
+                          <YAxis
+                            stroke={chartTextColor}
+                            fontSize={10}
+                            tickLine={false}
+                            axisLine={false}
+                            dx={-10}
+                          />
+                          <Tooltip
+                            cursor={{ fill: isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.05)' }}
+                            contentStyle={{ backgroundColor: isLight ? '#fff' : '#111', border: `1px solid ${isLight ? '#e2e8f0' : '#333'}`, fontSize: '12px', color: isLight ? '#0f172a' : '#fff' }}
+                          />
+                          <Bar
+                            dataKey="count"
+                            name="Parts Added"
+                            fill="#C0392B"
+                            radius={[4, 4, 0, 0]}
+                            barSize={30}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
                 </div>
+              </div>
 
               {/* Overview Tabs */}
               <div className="mt-8">
@@ -749,7 +779,7 @@ const AdminDashboard = () => {
                                 {group.variants.length} Variants
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-white font-mono text-xs">{Math.max(...group.variants.map(v => v.stockPower || 0))} HP</td>
+                            <td className="px-6 py-4 text-white font-mono text-xs">{[...new Set(group.variants.map(v => v.stockPower).filter(Boolean))].sort((a,b) => a-b).join(", ") || "0"} HP</td>
                           </tr>
                         ))}
                       </tbody>
@@ -800,6 +830,23 @@ const AdminDashboard = () => {
                   <h1 className="font-h2 text-white uppercase tracking-wider">User Management</h1>
                   <p className="text-zinc-400 text-sm">Manage user accounts and permissions.</p>
                 </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search Users..."
+                    value={userSearch}
+                    onChange={(e) => {
+                      setUserSearch(e.target.value);
+                      setUserPage(1);
+                    }}
+                    className="bg-[#111111] border border-white/5 px-4 py-2 text-white text-xs font-label-caps tracking-widest focus:outline-none focus:border-[#C0392B] transition-colors w-64"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
               <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
                 <div className="p-6 border-b border-white/5">
@@ -817,7 +864,7 @@ const AdminDashboard = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {users.slice((userPage - 1) * 10, userPage * 10).map((user) => (
+                      {filteredUsers.slice((userPage - 1) * 10, userPage * 10).map((user) => (
                         <tr key={user._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
                           <td className="px-6 py-4 text-[#C0392B] font-mono">{user._id.slice(-6)}</td>
                           <td className="px-6 py-4 text-white font-medium">{user.email}</td>
@@ -840,7 +887,7 @@ const AdminDashboard = () => {
                 </div>
                 <Pagination
                   currentPage={userPage}
-                  totalPages={Math.ceil(users.length / 10)}
+                  totalPages={Math.ceil(filteredUsers.length / 10)}
                   onPageChange={setUserPage}
                 />
               </div>
@@ -854,9 +901,29 @@ const AdminDashboard = () => {
                   <h1 className="font-h2 text-white uppercase tracking-wider">Vehicle Database</h1>
                   <p className="text-zinc-400 text-sm">Manage supported vehicles in the ModMyRide platform.</p>
                 </div>
-                <button onClick={() => handleOpenVehicleModal()} className="bg-[#C0392B] text-white px-6 py-2 rounded-none font-label-caps tracking-widest hover:bg-[#a93226] transition-colors">
-                  + Add Vehicle
-                </button>
+                <div className="flex gap-4 items-center">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search Vehicles..."
+                      value={vehicleSearch}
+                      onChange={(e) => {
+                        setVehicleSearch(e.target.value);
+                        setCarPage(1);
+                        setBikePage(1);
+                      }}
+                      className="bg-[#111111] border border-white/5 px-4 py-2 text-white text-xs font-label-caps tracking-widest focus:outline-none focus:border-[#C0392B] transition-colors w-64"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <button onClick={() => handleOpenVehicleModal()} className="bg-[#C0392B] text-white px-6 py-2 rounded-none font-label-caps tracking-widest hover:bg-[#a93226] transition-colors">
+                    + Add Vehicle
+                  </button>
+                </div>
               </div>
 
               {/* Vehicle Tabs */}
@@ -871,8 +938,8 @@ const AdminDashboard = () => {
 
               {/* Cars Tab Content */}
               {vehicleTab === "cars" && (
-                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
-                  <div className="overflow-x-auto">
+                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-visible">
+                  <div className="overflow-visible">
                     <table className="w-full text-left font-body-sm">
                       <thead className="bg-[#111111] border-b border-white/5">
                         <tr>
@@ -886,7 +953,7 @@ const AdminDashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {groupedVehicles.filter(v => v.type === 'car').slice((carPage - 1) * 10, carPage * 10).map((group) => (
+                        {filteredGroupedVehicles.filter(v => v.type === 'car').slice((carPage - 1) * 10, carPage * 10).map((group) => (
                           <tr key={group._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
                             <td className="px-6 py-4 text-white font-medium">{group.make}</td>
                             <td className="px-6 py-4 text-zinc-400">{group.model}</td>
@@ -895,7 +962,7 @@ const AdminDashboard = () => {
                               <div className="flex flex-wrap gap-1">
                                 {group.variants.map(v => (
                                   <span key={v._id} className="bg-zinc-800 text-zinc-400 text-[8px] px-2 py-1 uppercase font-bold border border-white/5">
-                                    {v.fuelType.charAt(0)}·{v.transmission === 'Manual' ? 'MT' : 'AT'}
+                                    {v.fuelType.charAt(0)}·{v.transmission === 'Manual' ? 'MT' : v.transmission === 'Automatic' ? 'AT' : 'MT/AT'}
                                   </span>
                                 ))}
                               </div>
@@ -904,20 +971,20 @@ const AdminDashboard = () => {
                               {[...new Set(group.variants.map(v => v.engine))].join(", ") || "-"}
                             </td>
                             <td className="px-6 py-4 text-white font-mono text-xs">
-                              {Math.max(...group.variants.map(v => v.stockPower || 0))} HP
+                              {[...new Set(group.variants.map(v => v.stockPower).filter(Boolean))].sort((a,b) => a-b).join(", ") || "0"} HP
                             </td>
                             <td className="px-6 py-4 flex gap-3">
                               <div className="group relative">
-                                                                <button 
+                                <button
                                   onClick={() => handleOpenVehicleModal(group.variants[0])}
                                   className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase"
                                 >
                                   {group.variants.length > 1 ? "Edit Variant" : "Edit"}
                                 </button>
 
-                                <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
+                                <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
                                   {group.variants.map(v => (
-                                    <button 
+                                    <button
                                       key={v._id}
                                       onClick={() => handleOpenVehicleModal(v)}
                                       className="w-full text-left px-4 py-2 text-[10px] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors uppercase border-b border-white/5 last:border-0"
@@ -928,16 +995,16 @@ const AdminDashboard = () => {
                                 </div>
                               </div>
                               <div className="group relative">
-                                                                <button 
+                                <button
                                   onClick={() => handleDeleteVehicle(group.variants[0]._id)}
                                   className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase"
                                 >
                                   {group.variants.length > 1 ? "Delete Variant" : "Delete"}
                                 </button>
 
-                                <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
+                                <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
                                   {group.variants.map(v => (
-                                    <button 
+                                    <button
                                       key={v._id}
                                       onClick={() => handleDeleteVehicle(v._id)}
                                       className="w-full text-left px-4 py-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors uppercase border-b border-white/5 last:border-0"
@@ -955,7 +1022,7 @@ const AdminDashboard = () => {
                   </div>
                   <Pagination
                     currentPage={carPage}
-                    totalPages={Math.ceil(groupedVehicles.filter(v => v.type === 'car').length / 10)}
+                    totalPages={Math.ceil(filteredGroupedVehicles.filter(v => v.type === 'car').length / 10)}
                     onPageChange={setCarPage}
                   />
                 </div>
@@ -963,8 +1030,8 @@ const AdminDashboard = () => {
 
               {/* Bikes Tab Content */}
               {vehicleTab === "bikes" && (
-                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
-                  <div className="overflow-x-auto">
+                <div className="bg-[#1A1A1A] machined-edge rounded-none overflow-visible">
+                  <div className="overflow-visible">
                     <table className="w-full text-left font-body-sm">
                       <thead className="bg-[#111111] border-b border-white/5">
                         <tr>
@@ -978,7 +1045,7 @@ const AdminDashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {groupedVehicles.filter(v => v.type === 'bike').slice((bikePage - 1) * 10, bikePage * 10).map((group) => (
+                        {filteredGroupedVehicles.filter(v => v.type === 'bike').slice((bikePage - 1) * 10, bikePage * 10).map((group) => (
                           <tr key={group._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
                             <td className="px-6 py-4 text-white font-medium">{group.make}</td>
                             <td className="px-6 py-4 text-zinc-400">{group.model}</td>
@@ -987,7 +1054,7 @@ const AdminDashboard = () => {
                               <div className="flex flex-wrap gap-1">
                                 {group.variants.map(v => (
                                   <span key={v._id} className="bg-zinc-800 text-zinc-400 text-[8px] px-2 py-1 uppercase font-bold border border-white/5">
-                                    {v.fuelType.charAt(0)}·{v.transmission === 'Manual' ? 'MT' : 'AT'}
+                                    {v.engine || 'Standard'}
                                   </span>
                                 ))}
                               </div>
@@ -996,45 +1063,45 @@ const AdminDashboard = () => {
                               {[...new Set(group.variants.map(v => v.engine))].join(", ") || "-"}
                             </td>
                             <td className="px-6 py-4 text-white font-mono text-xs">
-                              {Math.max(...group.variants.map(v => v.stockPower || 0))} HP
+                              {[...new Set(group.variants.map(v => v.stockPower).filter(Boolean))].sort((a,b) => a-b).join(", ") || "0"} HP
                             </td>
                             <td className="px-6 py-4 flex gap-3">
                               <div className="group relative">
-                                                                <button 
+                                <button
                                   onClick={() => handleOpenVehicleModal(group.variants[0])}
                                   className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase"
                                 >
                                   {group.variants.length > 1 ? "Edit Variant" : "Edit"}
                                 </button>
 
-                                <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
+                                <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
                                   {group.variants.map(v => (
-                                    <button 
+                                    <button
                                       key={v._id}
                                       onClick={() => handleOpenVehicleModal(v)}
                                       className="w-full text-left px-4 py-2 text-[10px] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors uppercase border-b border-white/5 last:border-0"
                                     >
-                                      {v.fuelType} {v.transmission} ({v.engine})
+                                      {v.engine || 'Standard'}
                                     </button>
                                   ))}
                                 </div>
                               </div>
                               <div className="group relative">
-                                                                <button 
+                                <button
                                   onClick={() => handleDeleteVehicle(group.variants[0]._id)}
                                   className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase"
                                 >
                                   {group.variants.length > 1 ? "Delete Variant" : "Delete"}
                                 </button>
 
-                                <div className="hidden group-hover:block absolute left-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
+                                <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
                                   {group.variants.map(v => (
-                                    <button 
+                                    <button
                                       key={v._id}
                                       onClick={() => handleDeleteVehicle(v._id)}
                                       className="w-full text-left px-4 py-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors uppercase border-b border-white/5 last:border-0"
                                     >
-                                      {v.fuelType} {v.transmission}
+                                      {v.engine || 'Standard'}
                                     </button>
                                   ))}
                                 </div>
@@ -1047,7 +1114,7 @@ const AdminDashboard = () => {
                   </div>
                   <Pagination
                     currentPage={bikePage}
-                    totalPages={Math.ceil(groupedVehicles.filter(v => v.type === 'bike').length / 10)}
+                    totalPages={Math.ceil(filteredGroupedVehicles.filter(v => v.type === 'bike').length / 10)}
                     onPageChange={setBikePage}
                   />
                 </div>
@@ -1062,9 +1129,29 @@ const AdminDashboard = () => {
                   <h1 className="font-h2 text-white uppercase tracking-wider">Upgrades Database</h1>
                   <p className="text-zinc-400 text-sm">Manage performance parts and visual upgrades.</p>
                 </div>
-                <button onClick={() => handleOpenUpgradeModal()} className="bg-[#C0392B] text-white px-6 py-2 rounded-none font-label-caps tracking-widest hover:bg-[#a93226] transition-colors">
-                  + Add Upgrade
-                </button>
+                <div className="flex gap-4 items-center">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search Upgrades..."
+                      value={upgradeSearch}
+                      onChange={(e) => {
+                        setUpgradeSearch(e.target.value);
+                        setCarUpgradePage(1);
+                        setBikeUpgradePage(1);
+                      }}
+                      className="bg-[#111111] border border-white/5 px-4 py-2 text-white text-xs font-label-caps tracking-widest focus:outline-none focus:border-[#C0392B] transition-colors w-64"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <button onClick={() => handleOpenUpgradeModal()} className="bg-[#C0392B] text-white px-6 py-2 rounded-none font-label-caps tracking-widest hover:bg-[#a93226] transition-colors">
+                    + Add Upgrade
+                  </button>
+                </div>
               </div>
 
               {/* Upgrades Tabs */}
@@ -1095,7 +1182,7 @@ const AdminDashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {upgrades.filter(u => u.type === 'car').slice((carUpgradePage - 1) * 10, carUpgradePage * 10).map((upgrade) => (
+                        {filteredUpgrades.filter(u => u.type === 'car').slice((carUpgradePage - 1) * 10, carUpgradePage * 10).map((upgrade) => (
                           <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
                             <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
                             <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
@@ -1115,7 +1202,7 @@ const AdminDashboard = () => {
                   </div>
                   <Pagination
                     currentPage={carUpgradePage}
-                    totalPages={Math.ceil(upgrades.filter(u => u.type === 'car').length / 10)}
+                    totalPages={Math.ceil(filteredUpgrades.filter(u => u.type === 'car').length / 10)}
                     onPageChange={setCarUpgradePage}
                   />
                 </div>
@@ -1139,7 +1226,7 @@ const AdminDashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {upgrades.filter(u => u.type === 'bike').slice((bikeUpgradePage - 1) * 10, bikeUpgradePage * 10).map((upgrade) => (
+                        {filteredUpgrades.filter(u => u.type === 'bike').slice((bikeUpgradePage - 1) * 10, bikeUpgradePage * 10).map((upgrade) => (
                           <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
                             <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
                             <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
@@ -1159,7 +1246,7 @@ const AdminDashboard = () => {
                   </div>
                   <Pagination
                     currentPage={bikeUpgradePage}
-                    totalPages={Math.ceil(upgrades.filter(u => u.type === 'bike').length / 10)}
+                    totalPages={Math.ceil(filteredUpgrades.filter(u => u.type === 'bike').length / 10)}
                     onPageChange={setBikeUpgradePage}
                   />
                 </div>
@@ -1182,21 +1269,21 @@ const AdminDashboard = () => {
             <form onSubmit={handleUserSubmit} className="p-6 space-y-6">
               <div className="space-y-2">
                 <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Email *</label>
-                <input 
-                  type="email" 
-                  required 
-                  value={currentUser.email} 
-                  onChange={(e) => setCurrentUser({...currentUser, email: e.target.value})}
-                  placeholder="user@example.com" 
+                <input
+                  type="email"
+                  required
+                  value={currentUser.email}
+                  onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
+                  placeholder="user@example.com"
                   className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                 />
               </div>
               <div className="space-y-2">
                 <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Role *</label>
-                <select 
-                  required 
-                  value={currentUser.role} 
-                  onChange={(e) => setCurrentUser({...currentUser, role: e.target.value})}
+                <select
+                  required
+                  value={currentUser.role}
+                  onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}
                   className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                 >
                   <option value="user">User</option>
@@ -1224,13 +1311,14 @@ const AdminDashboard = () => {
             </div>
             <form onSubmit={handleVehicleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
+                {/* Identity Section */}
                 <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Type *</label>
-                  <select 
-                    required 
-                    value={currentVehicle.type} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, type: e.target.value})}
+                  <select
+                    required
+                    value={currentVehicle.type}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, type: e.target.value })}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   >
                     <option value="car">Car</option>
@@ -1240,92 +1328,112 @@ const AdminDashboard = () => {
 
                 <div className="space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={currentVehicle.make} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, make: e.target.value})}
-                    placeholder={currentVehicle.type === 'car' ? "e.g: Ford" : "e.g: Hero"} 
+                  <input
+                    type="text"
+                    required
+                    value={currentVehicle.make}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, make: e.target.value })}
+                    placeholder={currentVehicle.type === 'car' ? "e.g: Ford" : "e.g: Hero"}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={currentVehicle.model} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, model: e.target.value})}
+                  <input
+                    type="text"
+                    required
+                    value={currentVehicle.model}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, model: e.target.value })}
                     placeholder={currentVehicle.type === 'car' ? "e.g: Ikon" : "e.g: Xpulse"}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={currentVehicle.year} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, year: e.target.value})}
+                  <input
+                    type="text"
+                    required
+                    value={currentVehicle.year}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, year: e.target.value })}
                     placeholder={currentVehicle.type === 'car' ? "e.g: 2020 or 2020-2025" : "e.g: 2025 or 2020-2025"}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                   <small className="text-zinc-500 text-xs block">Enter single year (e.g: 2025) or year range (e.g: 2020-2025)</small>
                 </div>
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Fuel Type *</label>
-                  <select 
-                    required 
-                    value={currentVehicle.fuelType} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, fuelType: e.target.value})}
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  >
-                    <option value="Petrol">Petrol</option>
-                    <option value="Diesel">Diesel</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Transmission *</label>
-                  <select 
-                    required 
-                    value={currentVehicle.transmission} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, transmission: e.target.value})}
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  >
-                    <option value="Manual">Manual</option>
-                    <option value="Automatic">Automatic</option>
-                  </select>
-                </div>
+
+                {/* Engine & Drivetrain Section */}
                 <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine</label>
-                  <input 
-                    type="text" 
-                    value={currentVehicle.engine} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, engine: e.target.value})}
-                    placeholder={currentVehicle.type === 'car' ? "e.g: 1.4L Turbo or 1.3L NA" : "e.g: 200cc or 210cc"}
+                  <input
+                    type="text"
+                    value={currentVehicle.engine}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, engine: e.target.value })}
+                    placeholder={currentVehicle.type === 'car' ? "e.g: 1.6L ROCAM" : "e.g: 200cc"}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                 </div>
+                {currentVehicle.type !== 'bike' && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Fuel Type *</label>
+                      <select
+                        required
+                        value={currentVehicle.fuelType}
+                        onChange={(e) => setCurrentVehicle({ ...currentVehicle, fuelType: e.target.value })}
+                        className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                      >
+                        <option value="Petrol">Petrol</option>
+                        <option value="Diesel">Diesel</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Transmission *</label>
+                      <select
+                        required
+                        value={currentVehicle.transmission}
+                        onChange={(e) => setCurrentVehicle({ ...currentVehicle, transmission: e.target.value })}
+                        className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                      >
+                        <option value="Manual">Manual</option>
+                        <option value="Automatic">Automatic</option>
+                        <option value="Both">Both</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+
+                {/* Performance Specs Section */}
                 <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Power (HP/PS)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.1"
                     min="0"
-                    value={currentVehicle.stockPower} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, stockPower: parseFloat(e.target.value)})}
+                    value={currentVehicle.stockPower}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, stockPower: parseFloat(e.target.value) })}
                     placeholder="e.g: 130.5"
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                   <small className="text-zinc-500 text-xs block">Enter decimal values for precise horsepower (e.g: 130.5)</small>
                 </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Image URL</label>
-                  <input 
-                    type="url" 
-                    value={currentVehicle.imageUrl} 
-                    onChange={(e) => setCurrentVehicle({...currentVehicle, imageUrl: e.target.value})}
-                    placeholder="https://..."
+                <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Mileage</label>
+                  <input
+                    type="text"
+                    value={currentVehicle.mileage}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, mileage: e.target.value })}
+                    placeholder="e.g: 15 kmpl"
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Torque</label>
+                  <input
+                    type="text"
+                    value={currentVehicle.torque}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, torque: e.target.value })}
+                    placeholder="e.g: 200 Nm"
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                 </div>
@@ -1351,19 +1459,13 @@ const AdminDashboard = () => {
             </div>
             <form onSubmit={handleUpgradeSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Type *</label>
-                  <select 
-                    required 
-                    value={currentUpgrade.type} 
-                    onChange={(e) => {
-                      setCurrentUpgrade({
-                        ...currentUpgrade, 
-                        type: e.target.value,
-                        compatibleVehicles: [] 
-                      });
-                    }}
+                  <select
+                    required
+                    value={currentUpgrade.type}
+                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, type: e.target.value, compatibleVehicles: [] })}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   >
                     <option value="car">Car Part</option>
@@ -1373,38 +1475,37 @@ const AdminDashboard = () => {
 
                 <div className="space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={currentUpgrade.name} 
-                    onChange={(e) => setCurrentUpgrade({...currentUpgrade, name: e.target.value})}
+                  <input
+                    type="text"
+                    required
+                    value={currentUpgrade.name}
+                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, name: e.target.value })}
                     placeholder="e.g: BMC Air Filter"
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category *</label>
-                  <select 
-                    required 
-                    value={currentUpgrade.category} 
+                  <select
+                    required
+                    value={currentUpgrade.category}
                     onChange={(e) => {
                       const newCat = e.target.value;
                       const mappedGoals = {
                         "Air Intake": ["Performance", "Better Mileage"],
                         "Exhaust Systems": ["Performance"],
                         "ECU & Tuning": ["Performance", "Better Mileage"],
-                        "Suspension": ["Handling"],
+                        "Suspension": ["Performance", "Handling", "Off-Road"],
                         "Brakes": ["Handling"],
-                        "Off-Road Accessories": ["Off-Road"],
-                        "Wheels & Tyres": ["Handling", "Off-Road"],
+                        "Wheels & Tyres": ["Performance", "Handling", "Off-Road"],
                         "Lighting": ["Lighting Improvements"]
                       }[newCat] || [];
-                      
+
                       setCurrentUpgrade({
-                        ...currentUpgrade, 
+                        ...currentUpgrade,
                         category: newCat,
-                        goals: [...new Set([...currentUpgrade.goals, ...mappedGoals])]
+                        goals: mappedGoals
                       });
                     }}
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
@@ -1412,130 +1513,189 @@ const AdminDashboard = () => {
                     <option value="Air Intake">Air Intake - Performance and Better Mileage</option>
                     <option value="Exhaust Systems">Exhaust Systems - Performance</option>
                     <option value="ECU & Tuning">ECU & Tuning - Performance and Better Mileage</option>
-                    <option value="Suspension">Suspension - Handling</option>
+                    <option value="Suspension">Suspension - Performance, Handling and Off-road</option>
                     <option value="Brakes">Brakes - Handling</option>
-                    <option value="Off-Road Accessories">Off-Road Accessories - Off Road</option>
-                    <option value="Wheels & Tyres">Wheels & Tyres - Handling and Off road</option>
-                    <option value="Lighting">Lighting - Lighting</option>
+                    <option value="Wheels & Tyres">Wheels & Tyres - Performance, Handling and Off-road</option>
+                    <option value="Lighting">Lighting</option>
                   </select>
                 </div>
 
                 <div className="space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price (INR) *</label>
-                  <input 
-                    type="number" 
-                    required 
+                  <input
+                    type="number"
+                    required
                     min="0"
                     step="0.01"
-                    value={currentUpgrade.price} 
-                    onChange={(e) => setCurrentUpgrade({...currentUpgrade, price: parseFloat(e.target.value)})}
+                    value={currentUpgrade.price}
+                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, price: parseFloat(e.target.value) })}
                     placeholder="500-5,00,000"
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                 </div>
-                
-                {["Engine", "Exhaust"].includes(currentUpgrade.category) && (
-                  <div className="space-y-2">
-                    <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Performance Gain</label>
-                    <input 
-                      type="text" 
-                      value={currentUpgrade.performanceGain} 
-                      onChange={(e) => setCurrentUpgrade({...currentUpgrade, performanceGain: e.target.value})}
-                      placeholder="+15hp or -5hp"
-                      className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                    />
-                  </div>
+
+                {["Air Intake", "Exhaust Systems", "ECU & Tuning"].includes(currentUpgrade.category) && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Performance Gain</label>
+                      <input
+                        type="text"
+                        value={currentUpgrade.performanceGain}
+                        onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, performanceGain: e.target.value })}
+                        placeholder="+15hp or -5hp"
+                        className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Torque Gain</label>
+                      <input
+                        type="text"
+                        value={currentUpgrade.torque}
+                        onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, torque: e.target.value })}
+                        placeholder="e.g: +15 Nm"
+                        className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Mileage Impact</label>
+                      <input
+                        type="text"
+                        value={currentUpgrade.mileage}
+                        onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, mileage: e.target.value })}
+                        placeholder="e.g: +2 kmpl or -1 kmpl"
+                        className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                      />
+                    </div>
+                  </>
                 )}
 
                 <div className="md:col-span-2 space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Compatible Vehicles (Hold Ctrl/Cmd to select multiple)</label>
-                  <select 
-                    multiple
-                    value={currentUpgrade.compatibleVehicles} 
-                    onChange={handleUpgradeVehicleSelection}
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[120px]"
-                  >
-                    {compatibleVehiclesOptions.length === 0 ? (
-                      <option disabled className="text-zinc-500">No {currentUpgrade.type}s found in database.</option>
-                    ) : (
-                      compatibleVehiclesOptions.map(v => (
-                        <option key={v._id} value={v._id} className="py-1">
-                          {v.year} {v.make} {v.model} {v.trim ? `(${v.trim})` : ''}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                  <small className="text-zinc-500 text-xs block">
-                    Only showing vehicles of type: {currentUpgrade.type.toUpperCase()}
-                  </small>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Build Stage</label>
-                  <select 
-                    value={currentUpgrade.stage} 
-                    onChange={(e) => setCurrentUpgrade({...currentUpgrade, stage: e.target.value})}
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  >
-                    <option value="Universal">Universal</option>
-                    <option value="Stage 1">Stage 1</option>
-                    <option value="Stage 2">Stage 2</option>
-                    <option value="Stage 3">Stage 3</option>
-                  </select>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Goals (Hold Ctrl/Cmd to select multiple)</label>
-                  <select 
-                    multiple
-                    value={currentUpgrade.goals} 
-                    onChange={handleUpgradeGoalSelection}
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[120px]"
-                  >
-                    <option value="Performance" className="py-1">Performance</option>
-                    <option value="Better Mileage" className="py-1">Better Mileage</option>
-                    <option value="Handling" className="py-1">Handling</option>
-                    <option value="Off-Road" className="py-1">Off-Road</option>
-                    <option value="Lighting Improvements" className="py-1">Lighting Improvements</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Compatible Engine Types (Empty = All)</label>
-                  <select 
-                    multiple
-                    value={currentUpgrade.compatibleFuels} 
-                    onChange={handleUpgradeFuelSelection}
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[80px]"
-                  >
-                    <option value="Petrol" className="py-1">Petrol</option>
-                    <option value="Diesel" className="py-1">Diesel</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Compatible Transmissions (Empty = All)</label>
-                  <select 
-                    multiple
-                    value={currentUpgrade.compatibleTransmissions} 
-                    onChange={handleUpgradeTransmissionSelection}
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[80px]"
-                  >
-                    <option value="Manual" className="py-1">Manual</option>
-                    <option value="Automatic" className="py-1">Automatic</option>
-                  </select>
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Goals</label>
+                  <div className="w-full bg-[#111111] border border-white/10 rounded-none p-4 max-h-[150px] overflow-y-auto space-y-2">
+                    {["Performance", "Better Mileage", "Handling", "Off-Road", "Lighting Improvements"].map(goal => (
+                      <label key={goal} className="flex items-center gap-2 cursor-pointer group">
+                        <input 
+                          type="checkbox" 
+                          checked={currentUpgrade.goals.includes(goal)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setCurrentUpgrade({ ...currentUpgrade, goals: [...currentUpgrade.goals, goal] });
+                            } else {
+                              setCurrentUpgrade({ ...currentUpgrade, goals: currentUpgrade.goals.filter(g => g !== goal) });
+                            }
+                          }}
+                          className="appearance-none w-4 h-4 shrink-0 border border-white/20 bg-zinc-900 checked:bg-[#C0392B] checked:border-[#C0392B] rounded-sm transition-colors relative after:content-[''] after:absolute after:hidden checked:after:block after:left-[4px] after:top-[1px] after:w-[6px] after:h-[10px] after:border-r-2 after:border-b-2 after:border-white after:rotate-45"
+                        />
+                        <span className="group-hover:text-white text-zinc-400 font-body-sm transition-colors">{goal}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="md:col-span-2 space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Image URL</label>
-                  <input 
-                    type="url" 
-                    value={currentUpgrade.imageUrl} 
-                    onChange={(e) => setCurrentUpgrade({...currentUpgrade, imageUrl: e.target.value})}
-                    placeholder="https://..."
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  />
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Compatible Vehicles</label>
+                  <div className="w-full bg-[#111111] border border-white/10 rounded-none p-4 max-h-[150px] overflow-y-auto space-y-2">
+                    {compatibleVehiclesOptions.length === 0 ? (
+                      <p className="text-zinc-500 font-body-sm">No {currentUpgrade.type}s found in database.</p>
+                    ) : (
+                      Object.entries(groupedCompatibleVehicles).map(([modelKey, variants]) => {
+                        const isExpanded = expandedModels.includes(modelKey);
+                        const selectedVariantsInGroup = variants.filter(v => currentUpgrade.compatibleVehicles.includes(v._id));
+                        const isAllSelected = selectedVariantsInGroup.length === variants.length;
+                        const isPartialSelected = selectedVariantsInGroup.length > 0 && !isAllSelected;
+
+                        return (
+                          <div key={modelKey} className="space-y-2 border-b border-white/5 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
+                            <div className="flex items-center justify-between group">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  checked={isAllSelected}
+                                  ref={el => { if (el) el.indeterminate = isPartialSelected; }}
+                                  onChange={(e) => {
+                                    const variantIds = variants.map(v => v._id);
+                                    if (e.target.checked) {
+                                      setCurrentUpgrade({ 
+                                        ...currentUpgrade, 
+                                        compatibleVehicles: [...new Set([...currentUpgrade.compatibleVehicles, ...variantIds])] 
+                                      });
+                                      if (!isExpanded) setExpandedModels([...expandedModels, modelKey]);
+                                    } else {
+                                      setCurrentUpgrade({ 
+                                        ...currentUpgrade, 
+                                        compatibleVehicles: currentUpgrade.compatibleVehicles.filter(id => !variantIds.includes(id)) 
+                                      });
+                                    }
+                                  }}
+                                  className="appearance-none w-4 h-4 border border-white/20 bg-zinc-900 checked:bg-[#C0392B] checked:border-[#C0392B] rounded-sm transition-colors relative after:content-[''] after:absolute after:hidden checked:after:block after:left-[4px] after:top-[1px] after:w-[6px] after:h-[10px] after:border-r-2 after:border-b-2 after:border-white after:rotate-45 indeterminate:bg-zinc-700 indeterminate:after:block indeterminate:after:w-2 indeterminate:after:h-[2px] indeterminate:after:border-none indeterminate:after:bg-white indeterminate:after:left-[3px] indeterminate:after:top-[6px] indeterminate:after:rotate-0"
+                                />
+                                <span className="font-bold text-white uppercase text-[11px] tracking-wider group-hover:text-[#C0392B] transition-colors">{modelKey}</span>
+                              </label>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  if (isExpanded) setExpandedModels(expandedModels.filter(m => m !== modelKey));
+                                  else setExpandedModels([...expandedModels, modelKey]);
+                                }}
+                                className="text-zinc-500 hover:text-white transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-sm">{isExpanded ? 'expand_less' : 'expand_more'}</span>
+                              </button>
+                            </div>
+                            
+                            {isExpanded && (
+                              <div className="pl-6 space-y-2 border-l border-white/10 ml-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                {variants.map(v => (
+                                  <label key={v._id} className="flex items-center gap-2 cursor-pointer group/item">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={currentUpgrade.compatibleVehicles.includes(v._id)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setCurrentUpgrade({ ...currentUpgrade, compatibleVehicles: [...currentUpgrade.compatibleVehicles, v._id] });
+                                        } else {
+                                          setCurrentUpgrade({ ...currentUpgrade, compatibleVehicles: currentUpgrade.compatibleVehicles.filter(id => id !== v._id) });
+                                        }
+                                      }}
+                                      className="appearance-none w-3.5 h-3.5 border border-white/20 bg-zinc-900 checked:bg-[#C0392B] checked:border-[#C0392B] rounded-sm transition-colors relative after:content-[''] after:absolute after:hidden checked:after:block after:left-[3px] after:top-[0px] after:w-[5px] after:h-[9px] after:border-r-2 after:border-b-2 after:border-white after:rotate-45"
+                                    />
+                                    <span className="group-hover/item:text-white text-zinc-400 text-[10px] transition-colors">
+                                      {v.year} | {v.engine} {v.type !== 'bike' ? `| ${v.fuelType} | ${v.transmission !== 'Both' ? v.transmission : 'Manual/Auto'}` : ''}
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  <small className="text-zinc-500 text-xs block">
+                    Only showing vehicles of type: {currentUpgrade.type.toUpperCase()}. Leave empty to make it a universal part that fits every {currentUpgrade.type}.
+                  </small>
                 </div>
+
+                {!["Suspension", "Brakes", "Wheels & Tyres", "Lighting"].includes(currentUpgrade.category) && (
+                  <div className="space-y-2">
+                    <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Build Stage</label>
+                    <select
+                      value={currentUpgrade.stage}
+                      onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, stage: e.target.value })}
+                      className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                    >
+                      <option value="Universal">Universal</option>
+                      <option value="Stage 1">Stage 1</option>
+                      <option value="Stage 2">Stage 2</option>
+                      <option value="Stage 3">Stage 3</option>
+                    </select>
+                  </div>
+                )}
+
+
+
+
+
               </div>
               <div className="flex justify-end gap-4 pt-4 border-t border-white/5">
                 <button type="button" className="px-6 py-2 border border-white/10 text-white font-label-caps tracking-widest hover:bg-white/5 transition-colors uppercase text-sm" onClick={handleCloseUpgradeModal}>Cancel</button>

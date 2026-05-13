@@ -19,6 +19,16 @@ const LandingPage = () => {
     checkUser();
   }, []);
 
+  useEffect(() => {
+    if (window.location.hash === '#recommend') {
+      setTimeout(() => {
+        document.getElementById('recommend')?.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, []);
+
   const handleStartTuning = () => {
     if (user) {
       if (user.role === 'admin') {
@@ -41,14 +51,14 @@ const LandingPage = () => {
           </div>
           <span className="font-['Oswald'] text-2xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
         </div>
-        
+
         <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => navigate("/")} className="font-['Oswald'] uppercase tracking-widest text-xs text-white hover:text-[#C0392B] transition-colors">Home</button>
-          <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Recommend</button>
-          <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="font-['Oswald'] uppercase tracking-widest text-xs text-white hover:text-[#C0392B] transition-colors">Home</button>
+          <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Recommendation</button>
+          <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
         </div>
 
-        <button 
+        <button
           onClick={handleStartTuning}
           className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
         >
@@ -59,9 +69,9 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section id="home" className="relative h-screen flex items-center pt-20">
         <div className="absolute inset-0 z-0">
-          <img 
-            src={heroImage} 
-            alt="Performance Car" 
+          <img
+            src={heroImage}
+            alt="Performance Car"
             className="w-full h-full object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#1d100e] via-[#1d100e]/40 to-transparent"></div>
@@ -69,7 +79,7 @@ const LandingPage = () => {
         </div>
 
         <div className="relative z-10 px-8 md:px-16 max-w-4xl">
-          <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-[0.3em] text-sm md:text-base mb-4 animate-in fade-in slide-in-from-left duration-700">Engineering Excellence</h2>
+          <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-[0.3em] text-sm md:text-base mb-4 animate-in fade-in slide-in-from-left duration-700">UNLOCK THE FULL POTENTIAL</h2>
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-['Oswald'] font-black uppercase leading-[0.9] tracking-tighter text-white mb-6 animate-in fade-in slide-in-from-left duration-1000">
             Unlock Your <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-[#C0392B]">Vehicle's Potential</span>
@@ -78,13 +88,16 @@ const LandingPage = () => {
             Get personalized car & bike performance upgrade recommendations based on your goals and budget — built for Indian enthusiasts.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom duration-1000 delay-500">
-            <button 
+            <button
               onClick={handleStartTuning}
               className="px-10 py-4 bg-[#C0392B] text-white font-['Oswald'] uppercase tracking-widest text-sm hover:scale-105 transition-transform"
             >
               {user ? 'Go to Tuning' : 'Start Tuning'}
             </button>
-            <button className="px-10 py-4 border border-white/20 text-white font-['Oswald'] uppercase tracking-widest text-sm hover:bg-white/5 transition-colors">
+            <button 
+              onClick={() => document.getElementById('recommend')?.scrollIntoView({ behavior: 'smooth' })}
+              className="px-10 py-4 border border-white/20 text-white font-['Oswald'] uppercase tracking-widest text-sm hover:bg-white/5 transition-colors"
+            >
               Explore Guide
             </button>
           </div>
@@ -137,11 +150,11 @@ const LandingPage = () => {
           <h2 className="text-3xl md:text-5xl font-['Oswald'] font-bold uppercase text-white mb-8 tracking-tight">
             Ready to Build Your <span className="text-[#C0392B]">Ultimate Machine?</span>
           </h2>
-          <button 
+          <button
             onClick={handleStartTuning}
             className="px-12 py-5 bg-[#C0392B] text-white font-['Oswald'] uppercase tracking-[0.2em] text-sm hover:scale-105 transition-all shadow-[0_10px_40px_rgba(192,57,43,0.4)]"
           >
-            {user ? 'Open My Profile' : 'Create Your Profile'}
+            {user ? 'Get Recommendation' : 'Get Started'}
           </button>
         </div>
       </section>
@@ -165,30 +178,13 @@ const LandingPage = () => {
             <h4 className="font-['Oswald'] uppercase tracking-widest text-xs text-white mb-6">Explore</h4>
             <ul className="space-y-4">
               <li><button onClick={() => navigate("/")} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">About Us</button></li>
-              <li><button onClick={handleStartTuning} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Performance Guide</button></li>
+              <li><button onClick={() => document.getElementById('recommend')?.scrollIntoView({ behavior: 'smooth' })} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Performance Guide</button></li>
               <li><button onClick={handleStartTuning} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Recommendations</button></li>
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-['Oswald'] uppercase tracking-widest text-xs text-white mb-6">Legal</h4>
-            <ul className="space-y-4">
-              <li><a href="#" className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors">Cookie Policy</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-['Oswald'] uppercase tracking-widest text-xs text-white mb-6">Connect</h4>
-            <div className="flex gap-4">
-              {['facebook', 'instagram', 'twitter', 'youtube'].map((social) => (
-                <a key={social} href="#" className="w-10 h-10 bg-[#2a1c1a] machined-edge flex items-center justify-center text-zinc-500 hover:text-[#C0392B] hover:border-[#C0392B]/50 transition-all">
-                  <span className="material-symbols-outlined text-lg">{social}</span>
-                </a>
-              ))}
-            </div>
-          </div>
+          <div></div>
+          <div></div>
         </div>
         <div className="pt-8 border-t border-white/5 text-center">
           <p className="text-zinc-600 text-[10px] uppercase tracking-widest font-['Oswald']">

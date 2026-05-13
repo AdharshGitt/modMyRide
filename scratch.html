@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>ModMyRide Admin Dashboard | Performance Tuner</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>ModMyRide Admin Dashboard | Performance Tuner</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -89,335 +97,431 @@
                         "button": ["Oswald"]
                     },
                     "fontSize": {
-                        "body-lg": ["18px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}],
-                        "h3": ["24px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
-                        "body-md": ["16px", {"lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400"}],
-                        "body-sm": ["14px", {"lineHeight": "1.4", "letterSpacing": "0", "fontWeight": "400"}],
-                        "label-caps": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500"}],
-                        "h2": ["32px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "700"}],
-                        "h1": ["48px", {"lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "700"}],
-                        "button": ["16px", {"lineHeight": "1", "letterSpacing": "0.03em", "fontWeight": "600"}]
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }],
+                        "h3": ["24px", { "lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "letterSpacing": "0", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "1.4", "letterSpacing": "0", "fontWeight": "400" }],
+                        "label-caps": ["14px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "h2": ["32px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "700" }],
+                        "h1": ["48px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "700" }],
+                        "button": ["16px", { "lineHeight": "1", "letterSpacing": "0.03em", "fontWeight": "600" }]
                     }
                 },
             },
         }
     </script>
-<style>
+    <style>
         .machined-edge {
             border: 1px solid rgba(255, 255, 255, 0.07);
         }
+
         .bg-near-black {
             background-color: #0A0A0A;
         }
+
         .bg-surface-elevated {
             background-color: #1A1A1A;
         }
+
         .bg-surface-high {
             background-color: #242424;
         }
+
         .header-anchor {
             font-family: 'Oswald';
             letter-spacing: -0.05em;
         }
     </style>
 </head>
+
 <body class="bg-near-black text-on-surface font-body-md overflow-hidden">
-<div class="flex h-screen w-full">
-<!-- SideNavBar -->
-<aside class="bg-[#1A1A1A] h-screen w-64 border-r border-white/5 shadow-[4px_0_0_0_#000000] flex flex-col h-full p-4 gap-2 shrink-0">
-<div class="mb-8 px-2">
-<div class="text-xl font-black text-white font-['Oswald'] uppercase tracking-tight">CONTROL CENTER</div>
-<div class="text-zinc-500 font-['Oswald'] uppercase font-medium tracking-tight text-xs">Precision Engineering</div>
-</div>
-<nav class="flex-1 space-y-2">
-<a class="bg-[#C0392B] text-white rounded-lg shadow-lg flex items-center gap-3 px-4 py-3 active:scale-95 transition-transform font-['Oswald'] uppercase font-medium tracking-tight" href="#">
-<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
-<span>Dashboard</span>
-</a>
-<a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight" href="#">
-<span class="material-symbols-outlined" data-icon="directions_car">directions_car</span>
-<span>Vehicles</span>
-</a>
-<a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight" href="#">
-<span class="material-symbols-outlined" data-icon="manufacturing">manufacturing</span>
-<span>Parts Catalog</span>
-</a>
-<a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight" href="#">
-<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
-<span>Build Moderation</span>
-</a>
-<a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight" href="#">
-<span class="material-symbols-outlined" data-icon="settings">settings</span>
-<span>Settings</span>
-</a>
-</nav>
-<div class="mt-auto border-t border-white/5 pt-4">
-<button class="w-full bg-zinc-800 text-white py-2 rounded font-['Oswald'] uppercase tracking-wider text-sm hover:bg-zinc-700 transition-colors mb-4">
+    <div class="flex h-screen w-full">
+        <!-- SideNavBar -->
+        <aside
+            class="bg-[#1A1A1A] h-screen w-64 border-r border-white/5 shadow-[4px_0_0_0_#000000] flex flex-col h-full p-4 gap-2 shrink-0">
+            <div class="mb-8 px-2">
+                <div class="text-xl font-black text-white font-['Oswald'] uppercase tracking-tight">CONTROL CENTER</div>
+                <div class="text-zinc-500 font-['Oswald'] uppercase font-medium tracking-tight text-xs">Precision
+                    Engineering</div>
+            </div>
+            <nav class="flex-1 space-y-2">
+                <a class="bg-[#C0392B] text-white rounded-lg shadow-lg flex items-center gap-3 px-4 py-3 active:scale-95 transition-transform font-['Oswald'] uppercase font-medium tracking-tight"
+                    href="#">
+                    <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+                <a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight"
+                    href="#">
+                    <span class="material-symbols-outlined" data-icon="directions_car">directions_car</span>
+                    <span>Vehicles</span>
+                </a>
+                <a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight"
+                    href="#">
+                    <span class="material-symbols-outlined" data-icon="manufacturing">manufacturing</span>
+                    <span>Parts Catalog</span>
+                </a>
+                <a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight"
+                    href="#">
+                    <span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+                    <span>Build Moderation</span>
+                </a>
+                <a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight"
+                    href="#">
+                    <span class="material-symbols-outlined" data-icon="settings">settings</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            <div class="mt-auto border-t border-white/5 pt-4">
+                <button
+                    class="w-full bg-zinc-800 text-white py-2 rounded font-['Oswald'] uppercase tracking-wider text-sm hover:bg-zinc-700 transition-colors mb-4">
                     SYSTEM STATUS
                 </button>
-<a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight" href="#">
+                <!-- <a class="text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight" href="#">
 <span class="material-symbols-outlined" data-icon="logout">logout</span>
 <span>Logout</span>
-</a>
-</div>
-</aside>
-<!-- Main Content Area -->
-<main class="flex-1 flex flex-col overflow-hidden">
-<!-- TopAppBar -->
-<header class="bg-[#0A0A0A] border-b border-white/10 flex justify-between items-center w-full px-6 h-16 shrink-0">
-<div class="flex items-center gap-6">
-<h1 class="text-2xl font-bold text-[#C0392B] font-['Oswald'] uppercase tracking-tighter">PERFORMANCE TUNER</h1>
-<div class="relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm" data-icon="search">search</span>
-<input class="bg-[#0A0A0A] border border-white/10 rounded-none text-zinc-400 text-xs py-2 pl-10 pr-4 w-64 focus:border-[#C0392B] focus:ring-0 font-['Oswald'] tracking-widest" placeholder="SEARCH PERFORMANCE DATA..." type="text"/>
-</div>
-</div>
-<div class="flex items-center gap-4">
-<button class="text-zinc-500 hover:text-white hover:bg-white/5 p-2 rounded transition-all">
-<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
-</button>
-<div class="h-8 w-8 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="A professional headshot of a automotive system administrator in a high-tech garage environment. The lighting is dramatic and technical, using deep blacks and sharp highlights to emphasize a professional, authoritative aesthetic. The background features blurred silhouettes of high-performance vehicle components and diagnostic screens, maintaining a cohesive dark-mode automotive theme." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgubsS1rnYnmvXqyFuX5Vu6aJOX5BzhyA9dVNTaTycHGEMjDBKBlOGGVbvBdNECxQmQAYEgjOhjTCVEK4S8X2cDxht5LAIEsPaHgidtAfQyIiDw-30kLt6wDmJxGSLZ2HL5wxmqdIYR6a8zAHwXtoKat4KU8PIptoLfx8Ckm-yICmfPs2cgM7jSIGUeUqUKv20qONkipsCRrHUdS_qbGgV4Feh3kVBA1O6J0gbMMr7t3ycPheuOnYKeh8V-7x9PAMvXhrdPlYRDogR"/>
-</div>
-</div>
-</header>
-<!-- Dashboard Content -->
-<div class="flex-1 overflow-y-auto p-8 space-y-8">
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-<div class="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-<span class="material-symbols-outlined text-6xl" data-icon="person">person</span>
-</div>
-<p class="font-label-caps text-zinc-500 uppercase mb-2">Total Users</p>
-<h2 class="font-h1 text-4xl text-white">42.8K</h2>
-<div class="mt-4 flex items-center gap-2">
-<span class="text-green-500 text-xs flex items-center"><span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span> +12%</span>
-<span class="text-zinc-600 text-[10px] font-label-caps uppercase">vs last month</span>
-</div>
-</div>
-<div class="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-<span class="material-symbols-outlined text-6xl" data-icon="build">build</span>
-</div>
-<p class="font-label-caps text-zinc-500 uppercase mb-2">Active Builds</p>
-<h2 class="font-h1 text-4xl text-white">1,204</h2>
-<div class="mt-4 flex items-center gap-2">
-<span class="text-green-500 text-xs flex items-center"><span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span> +8.4%</span>
-<span class="text-zinc-600 text-[10px] font-label-caps uppercase">live now</span>
-</div>
-</div>
-<div class="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-<span class="material-symbols-outlined text-6xl" data-icon="inventory_2">inventory_2</span>
-</div>
-<p class="font-label-caps text-zinc-500 uppercase mb-2">Parts Catalog</p>
-<h2 class="font-h1 text-4xl text-white">15,692</h2>
-<div class="mt-4 flex items-center gap-2">
-<span class="text-primary text-xs flex items-center"><span class="material-symbols-outlined text-sm" data-icon="add">add</span> 243</span>
-<span class="text-zinc-600 text-[10px] font-label-caps uppercase">added this week</span>
-</div>
-</div>
-<div class="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
-<div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-<span class="material-symbols-outlined text-6xl" data-icon="payments">payments</span>
-</div>
-<p class="font-label-caps text-zinc-500 uppercase mb-2">Total Revenue</p>
-<h2 class="font-h1 text-4xl text-white">$892.4K</h2>
-<div class="mt-4 flex items-center gap-2">
-<span class="text-green-500 text-xs flex items-center"><span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span> +22%</span>
-<span class="text-zinc-600 text-[10px] font-label-caps uppercase">mtd performance</span>
-</div>
-</div>
-</div>
-<!-- Main Grid -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-<!-- Recent Activity Feed -->
-<div class="lg:col-span-8 bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
-<div class="p-6 border-b border-white/5 flex justify-between items-center">
-<h3 class="font-h3 text-white uppercase tracking-wider">Recent Activity Feed</h3>
-<button class="text-[#C0392B] font-label-caps text-xs hover:underline uppercase">View All Logs</button>
-</div>
-<div class="divide-y divide-white/5">
-<div class="p-6 flex gap-4 hover:bg-[#242424] transition-colors cursor-pointer group">
-<div class="h-12 w-12 shrink-0 bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="A high-performance sports car interior with glowing carbon fiber accents and digital telemetry displays. The aesthetic is sharp, professional, and mechanical, utilizing a deep charcoal and vibrant red color palette. Lighting is moody and technical, highlighting the precision engineering of the dashboard components in a modern motorsport style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7TYTcanz537amAfmMZjfKNmcQrCrZzJPHAxqTqEGMRzk6YUFQFSR-BRfXZhFp8S--L0zBP1EhTrnwnlgciCJBACjvhk8aUNoYswxCin7-bN12zZ9BPyP_rJyXynRRkjdoEWFBRMY59yoEoRykeVd642VPlA7x96-YAK75_YjMeUjU_j4e7mZ5nLlaRJcfmwjWuW6x5bQLUzSzkhZpb4S9OS3F3cfS1j54L3Re_V-FsI3OtQtxg7n_PFybEH_4kyyduL02H-PNqVnd"/>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex justify-between items-start mb-1">
-<p class="text-white font-medium text-sm">Turbo System Overhaul <span class="text-zinc-500 font-normal">by</span> <span class="text-[#C0392B] font-semibold">RaceReady99</span></p>
-<span class="text-zinc-600 text-[10px] font-label-caps uppercase">2 MINS AGO</span>
-</div>
-<p class="text-zinc-400 text-xs line-clamp-1">New build entry: 2022 Supra A90 Stage 3 Tune including dual-exit exhaust and Garrett turbo swap.</p>
-<div class="mt-2 flex gap-2">
-<span class="bg-green-500/10 text-green-500 px-2 py-0.5 rounded text-[10px] font-label-caps uppercase">Approved</span>
-<span class="bg-[#C0392B]/10 text-[#C0392B] px-2 py-0.5 rounded text-[10px] font-label-caps uppercase">+450 HP</span>
-</div>
-</div>
-</div>
-<div class="p-6 flex gap-4 hover:bg-[#242424] transition-colors cursor-pointer group">
-<div class="h-12 w-12 shrink-0 bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="Macro photography of a precision-machined titanium piston and connecting rod assembly. The metal surface reflects cool blue and intense red studio lights, emphasizing the technical craftsmanship. The background is a clean, near-black industrial setting, creating a high-contrast automotive engineering aesthetic that feels professional and powerful." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAotbeo6l9l6bZQr6-nSdo9zJ0-s2bIcktqQXYKINAu6q1rGERZpd301ZoVqMHo5IFDrI0avwk3uATDVN0hB5A2Cd5dRKrnRH0npw07Ya0PJcO5l0dukGrZs9cRBi5UW6FV9TG9WMQ5yW8Is0NfXrKNWwO4rEbr7J6RLg8_41v_nQ4nCgAbJqAhrAh6krh7ThJTSEHIVFhPF-bvxVm907Bfwuy10O2tFoc7nuuy_3lLCXhdUijEUHsMYNkgW2ZcXFxxDSAroKCu1iNj"/>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex justify-between items-start mb-1">
-<p class="text-white font-medium text-sm">Forged Internals Kit <span class="text-zinc-500 font-normal">updated in</span> <span class="text-[#C0392B] font-semibold">Engine Catalog</span></p>
-<span class="text-zinc-600 text-[10px] font-label-caps uppercase">15 MINS AGO</span>
-</div>
-<p class="text-zinc-400 text-xs line-clamp-1">Specification update: H-Beam connecting rods and forged piston clearance tolerances revised for high-boost applications.</p>
-<div class="mt-2 flex gap-2">
-<span class="bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded text-[10px] font-label-caps uppercase">Critical Update</span>
-</div>
-</div>
-</div>
-<div class="p-6 flex gap-4 hover:bg-[#242424] transition-colors cursor-pointer group">
-<div class="h-12 w-12 shrink-0 bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden text-zinc-500">
-<span class="material-symbols-outlined text-2xl" data-icon="account_circle">account_circle</span>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex justify-between items-start mb-1">
-<p class="text-white font-medium text-sm">New Professional Account <span class="text-[#C0392B] font-semibold">Apex Tuning Solutions</span></p>
-<span class="text-zinc-600 text-[10px] font-label-caps uppercase">42 MINS AGO</span>
-</div>
-<p class="text-zinc-400 text-xs line-clamp-1">Business verification complete. Shop access granted to premium B2B catalog and bulk build uploads.</p>
-</div>
-</div>
-</div>
-</div>
-<!-- Quick Actions & System Status -->
-<div class="lg:col-span-4 space-y-8">
-<div class="bg-[#1A1A1A] machined-edge p-6 rounded-none">
-<h3 class="font-h3 text-white uppercase tracking-wider mb-6">Quick Actions</h3>
-<div class="grid grid-cols-2 gap-4">
-<button class="bg-[#242424] machined-edge p-4 flex flex-col items-center gap-2 hover:bg-[#C0392B] hover:text-white transition-all group rounded-none">
-<span class="material-symbols-outlined text-2xl" data-icon="add_circle">add_circle</span>
-<span class="font-label-caps text-[10px] uppercase tracking-widest">New Part</span>
-</button>
-<button class="bg-[#242424] machined-edge p-4 flex flex-col items-center gap-2 hover:bg-[#C0392B] hover:text-white transition-all group rounded-none">
-<span class="material-symbols-outlined text-2xl" data-icon="directions_car">directions_car</span>
-<span class="font-label-caps text-[10px] uppercase tracking-widest">Add Vehicle</span>
-</button>
-<button class="bg-[#242424] machined-edge p-4 flex flex-col items-center gap-2 hover:bg-[#C0392B] hover:text-white transition-all group rounded-none">
-<span class="material-symbols-outlined text-2xl" data-icon="assignment_late">assignment_late</span>
-<span class="font-label-caps text-[10px] uppercase tracking-widest">Pending</span>
-</button>
-<button class="bg-[#242424] machined-edge p-4 flex flex-col items-center gap-2 hover:bg-[#C0392B] hover:text-white transition-all group rounded-none">
-<span class="material-symbols-outlined text-2xl" data-icon="analytics">analytics</span>
-<span class="font-label-caps text-[10px] uppercase tracking-widest">Reports</span>
-</button>
-</div>
-</div>
-<div class="bg-[#1A1A1A] machined-edge p-6 rounded-none">
-<div class="flex justify-between items-center mb-6">
-<h3 class="font-h3 text-white uppercase tracking-wider">Server Telemetry</h3>
-<div class="flex items-center gap-2">
-<div class="w-2 h-2 rounded-full bg-green-500"></div>
-<span class="text-[10px] font-label-caps text-green-500 uppercase">Operational</span>
-</div>
-</div>
-<div class="space-y-6">
-<div>
-<div class="flex justify-between text-[10px] font-label-caps text-zinc-500 uppercase mb-2">
-<span>CPU LOAD</span>
-<span>34%</span>
-</div>
-<div class="h-2 w-full bg-[#0A0A0A] rounded-none overflow-hidden">
-<div class="h-full w-[34%] bg-gradient-to-r from-[#C0392B] to-[#FF6B35]"></div>
-</div>
-</div>
-<div>
-<div class="flex justify-between text-[10px] font-label-caps text-zinc-500 uppercase mb-2">
-<span>MEMORY USAGE</span>
-<span>62%</span>
-</div>
-<div class="h-2 w-full bg-[#0A0A0A] rounded-none overflow-hidden">
-<div class="h-full w-[62%] bg-gradient-to-r from-[#C0392B] to-[#FF6B35]"></div>
-</div>
-</div>
-<div>
-<div class="flex justify-between text-[10px] font-label-caps text-zinc-500 uppercase mb-2">
-<span>API LATENCY</span>
-<span>24MS</span>
-</div>
-<div class="h-2 w-full bg-[#0A0A0A] rounded-none overflow-hidden">
-<div class="h-full w-[15%] bg-gradient-to-r from-[#C0392B] to-[#FF6B35]"></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Technical Performance Table -->
-<div class="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
-<div class="p-6 border-b border-white/5">
-<h3 class="font-h3 text-white uppercase tracking-wider">Top Performing Parts</h3>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left font-body-sm">
-<thead class="bg-[#111111] border-b border-white/5">
-<tr>
-<th class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Part ID</th>
-<th class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Component Name</th>
-<th class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Manufacturer</th>
-<th class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Build Count</th>
-<th class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Revenue Contribution</th>
-<th class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Rating</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-white/5">
-<tr class="bg-[#111111] hover:bg-[#242424] transition-colors">
-<td class="px-6 py-4 text-[#C0392B] font-mono">PT-9942</td>
-<td class="px-6 py-4 text-white font-medium">BorgWarner EFR 8374 Turbo</td>
-<td class="px-6 py-4 text-zinc-400">BorgWarner</td>
-<td class="px-6 py-4 text-white">432</td>
-<td class="px-6 py-4 text-white">$1.2M</td>
-<td class="px-6 py-4">
-<div class="flex text-orange-500">
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-</div>
-</td>
-</tr>
-<tr class="bg-[#1A1A1A] hover:bg-[#242424] transition-colors">
-<td class="px-6 py-4 text-[#C0392B] font-mono">PT-8120</td>
-<td class="px-6 py-4 text-white font-medium">Ohlins Road &amp; Track Coilovers</td>
-<td class="px-6 py-4 text-zinc-400">Ohlins</td>
-<td class="px-6 py-4 text-white">318</td>
-<td class="px-6 py-4 text-white">$745K</td>
-<td class="px-6 py-4">
-<div class="flex text-orange-500">
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm">star</span>
-</div>
-</td>
-</tr>
-<tr class="bg-[#111111] hover:bg-[#242424] transition-colors">
-<td class="px-6 py-4 text-[#C0392B] font-mono">PT-4421</td>
-<td class="px-6 py-4 text-white font-medium">Brembo GT Big Brake Kit</td>
-<td class="px-6 py-4 text-zinc-400">Brembo</td>
-<td class="px-6 py-4 text-white">285</td>
-<td class="px-6 py-4 text-white">$912K</td>
-<td class="px-6 py-4">
-<div class="flex text-orange-500">
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 0.5;">star_half</span>
-</div>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</main>
-</div>
-</body></html>
+</a> -->
+            </div>
+        </aside>
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- TopAppBar -->
+            <header
+                class="bg-[#0A0A0A] border-b border-white/10 flex justify-between items-center w-full px-6 h-16 shrink-0">
+                <div class="flex items-center gap-6">
+                    <h1 class="text-2xl font-bold text-[#C0392B] font-['Oswald'] uppercase tracking-tighter">PERFORMANCE
+                        TUNER</h1>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm"
+                            data-icon="search">search</span>
+                        <input
+                            class="bg-[#0A0A0A] border border-white/10 rounded-none text-zinc-400 text-xs py-2 pl-10 pr-4 w-64 focus:border-[#C0392B] focus:ring-0 font-['Oswald'] tracking-widest"
+                            placeholder="SEARCH PERFORMANCE DATA..." type="text" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="text-zinc-500 hover:text-white hover:bg-white/5 p-2 rounded transition-all">
+                        <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+                    </button>
+                    <div
+                        class="h-8 w-8 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden">
+                        <img class="w-full h-full object-cover"
+                            data-alt="A professional headshot of a automotive system administrator in a high-tech garage environment. The lighting is dramatic and technical, using deep blacks and sharp highlights to emphasize a professional, authoritative aesthetic. The background features blurred silhouettes of high-performance vehicle components and diagnostic screens, maintaining a cohesive dark-mode automotive theme."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgubsS1rnYnmvXqyFuX5Vu6aJOX5BzhyA9dVNTaTycHGEMjDBKBlOGGVbvBdNECxQmQAYEgjOhjTCVEK4S8X2cDxht5LAIEsPaHgidtAfQyIiDw-30kLt6wDmJxGSLZ2HL5wxmqdIYR6a8zAHwXtoKat4KU8PIptoLfx8Ckm-yICmfPs2cgM7jSIGUeUqUKv20qONkipsCRrHUdS_qbGgV4Feh3kVBA1O6J0gbMMr7t3ycPheuOnYKeh8V-7x9PAMvXhrdPlYRDogR" />
+                    </div>
+                </div>
+            </header>
+            <!-- Dashboard Content -->
+            <div class="flex-1 overflow-y-auto p-8 space-y-8">
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-6xl" data-icon="person">person</span>
+                        </div>
+                        <p class="font-label-caps text-zinc-500 uppercase mb-2">Total Users</p>
+                        <h2 class="font-h1 text-4xl text-white">42.8K</h2>
+                        <div class="mt-4 flex items-center gap-2">
+                            <span class="text-green-500 text-xs flex items-center"><span
+                                    class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                                +12%</span>
+                            <span class="text-zinc-600 text-[10px] font-label-caps uppercase">vs last month</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-6xl" data-icon="build">build</span>
+                        </div>
+                        <p class="font-label-caps text-zinc-500 uppercase mb-2">Active Builds</p>
+                        <h2 class="font-h1 text-4xl text-white">1,204</h2>
+                        <div class="mt-4 flex items-center gap-2">
+                            <span class="text-green-500 text-xs flex items-center"><span
+                                    class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                                +8.4%</span>
+                            <span class="text-zinc-600 text-[10px] font-label-caps uppercase">live now</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-6xl" data-icon="inventory_2">inventory_2</span>
+                        </div>
+                        <p class="font-label-caps text-zinc-500 uppercase mb-2">Parts Catalog</p>
+                        <h2 class="font-h1 text-4xl text-white">15,692</h2>
+                        <div class="mt-4 flex items-center gap-2">
+                            <span class="text-primary text-xs flex items-center"><span
+                                    class="material-symbols-outlined text-sm" data-icon="add">add</span> 243</span>
+                            <span class="text-zinc-600 text-[10px] font-label-caps uppercase">added this week</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#1A1A1A] machined-edge p-6 rounded-none relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-6xl" data-icon="payments">payments</span>
+                        </div>
+                        <p class="font-label-caps text-zinc-500 uppercase mb-2">Total Revenue</p>
+                        <h2 class="font-h1 text-4xl text-white">$892.4K</h2>
+                        <div class="mt-4 flex items-center gap-2">
+                            <span class="text-green-500 text-xs flex items-center"><span
+                                    class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                                +22%</span>
+                            <span class="text-zinc-600 text-[10px] font-label-caps uppercase">mtd performance</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Main Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Recent Activity Feed -->
+                    <div class="lg:col-span-8 bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
+                        <div class="p-6 border-b border-white/5 flex justify-between items-center">
+                            <h3 class="font-h3 text-white uppercase tracking-wider">Recent Activity Feed</h3>
+                            <button class="text-[#C0392B] font-label-caps text-xs hover:underline uppercase">View All
+                                Logs</button>
+                        </div>
+                        <div class="divide-y divide-white/5">
+                            <div class="p-6 flex gap-4 hover:bg-[#242424] transition-colors cursor-pointer group">
+                                <div
+                                    class="h-12 w-12 shrink-0 bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden">
+                                    <img class="w-full h-full object-cover"
+                                        data-alt="A high-performance sports car interior with glowing carbon fiber accents and digital telemetry displays. The aesthetic is sharp, professional, and mechanical, utilizing a deep charcoal and vibrant red color palette. Lighting is moody and technical, highlighting the precision engineering of the dashboard components in a modern motorsport style."
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7TYTcanz537amAfmMZjfKNmcQrCrZzJPHAxqTqEGMRzk6YUFQFSR-BRfXZhFp8S--L0zBP1EhTrnwnlgciCJBACjvhk8aUNoYswxCin7-bN12zZ9BPyP_rJyXynRRkjdoEWFBRMY59yoEoRykeVd642VPlA7x96-YAK75_YjMeUjU_j4e7mZ5nLlaRJcfmwjWuW6x5bQLUzSzkhZpb4S9OS3F3cfS1j54L3Re_V-FsI3OtQtxg7n_PFybEH_4kyyduL02H-PNqVnd" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <p class="text-white font-medium text-sm">Turbo System Overhaul <span
+                                                class="text-zinc-500 font-normal">by</span> <span
+                                                class="text-[#C0392B] font-semibold">RaceReady99</span></p>
+                                        <span class="text-zinc-600 text-[10px] font-label-caps uppercase">2 MINS
+                                            AGO</span>
+                                    </div>
+                                    <p class="text-zinc-400 text-xs line-clamp-1">New build entry: 2022 Supra A90 Stage
+                                        3 Tune including dual-exit exhaust and Garrett turbo swap.</p>
+                                    <div class="mt-2 flex gap-2">
+                                        <span
+                                            class="bg-green-500/10 text-green-500 px-2 py-0.5 rounded text-[10px] font-label-caps uppercase">Approved</span>
+                                        <span
+                                            class="bg-[#C0392B]/10 text-[#C0392B] px-2 py-0.5 rounded text-[10px] font-label-caps uppercase">+450
+                                            HP</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6 flex gap-4 hover:bg-[#242424] transition-colors cursor-pointer group">
+                                <div
+                                    class="h-12 w-12 shrink-0 bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden">
+                                    <img class="w-full h-full object-cover"
+                                        data-alt="Macro photography of a precision-machined titanium piston and connecting rod assembly. The metal surface reflects cool blue and intense red studio lights, emphasizing the technical craftsmanship. The background is a clean, near-black industrial setting, creating a high-contrast automotive engineering aesthetic that feels professional and powerful."
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAotbeo6l9l6bZQr6-nSdo9zJ0-s2bIcktqQXYKINAu6q1rGERZpd301ZoVqMHo5IFDrI0avwk3uATDVN0hB5A2Cd5dRKrnRH0npw07Ya0PJcO5l0dukGrZs9cRBi5UW6FV9TG9WMQ5yW8Is0NfXrKNWwO4rEbr7J6RLg8_41v_nQ4nCgAbJqAhrAh6krh7ThJTSEHIVFhPF-bvxVm907Bfwuy10O2tFoc7nuuy_3lLCXhdUijEUHsMYNkgW2ZcXFxxDSAroKCu1iNj" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <p class="text-white font-medium text-sm">Forged Internals Kit <span
+                                                class="text-zinc-500 font-normal">updated in</span> <span
+                                                class="text-[#C0392B] font-semibold">Engine Catalog</span></p>
+                                        <span class="text-zinc-600 text-[10px] font-label-caps uppercase">15 MINS
+                                            AGO</span>
+                                    </div>
+                                    <p class="text-zinc-400 text-xs line-clamp-1">Specification update: H-Beam
+                                        connecting rods and forged piston clearance tolerances revised for high-boost
+                                        applications.</p>
+                                    <div class="mt-2 flex gap-2">
+                                        <span
+                                            class="bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded text-[10px] font-label-caps uppercase">Critical
+                                            Update</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6 flex gap-4 hover:bg-[#242424] transition-colors cursor-pointer group">
+                                <div
+                                    class="h-12 w-12 shrink-0 bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden text-zinc-500">
+                                    <span class="material-symbols-outlined text-2xl"
+                                        data-icon="account_circle">account_circle</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <p class="text-white font-medium text-sm">New Professional Account <span
+                                                class="text-[#C0392B] font-semibold">Apex Tuning Solutions</span></p>
+                                        <span class="text-zinc-600 text-[10px] font-label-caps uppercase">42 MINS
+                                            AGO</span>
+                                    </div>
+                                    <p class="text-zinc-400 text-xs line-clamp-1">Business verification complete. Shop
+                                        access granted to premium B2B catalog and bulk build uploads.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Quick Actions & System Status -->
+                    <div class="lg:col-span-4 space-y-8">
+                        <div class="bg-[#1A1A1A] machined-edge p-6 rounded-none">
+                            <h3 class="font-h3 text-white uppercase tracking-wider mb-6">Quick Actions</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button
+                                    class="bg-[#242424] machined-edge p-4 flex flex-col items-center gap-2 hover:bg-[#C0392B] hover:text-white transition-all group rounded-none">
+                                    <span class="material-symbols-outlined text-2xl"
+                                        data-icon="add_circle">add_circle</span>
+                                    <span class="font-label-caps text-[10px] uppercase tracking-widest">New Part</span>
+                                </button>
+                                <button
+                                    class="bg-[#242424] machined-edge p-4 flex flex-col items-center gap-2 hover:bg-[#C0392B] hover:text-white transition-all group rounded-none">
+                                    <span class="material-symbols-outlined text-2xl"
+                                        data-icon="directions_car">directions_car</span>
+                                    <span class="font-label-caps text-[10px] uppercase tracking-widest">Add
+                                        Vehicle</span>
+                                </button>
+                                <button
+                                    class="bg-[#242424] machined-edge p-4 flex flex-col items-center gap-2 hover:bg-[#C0392B] hover:text-white transition-all group rounded-none">
+                                    <span class="material-symbols-outlined text-2xl"
+                                        data-icon="assignment_late">assignment_late</span>
+                                    <span class="font-label-caps text-[10px] uppercase tracking-widest">Pending</span>
+                                </button>
+                                <button
+                                    class="bg-[#242424] machined-edge p-4 flex flex-col items-center gap-2 hover:bg-[#C0392B] hover:text-white transition-all group rounded-none">
+                                    <span class="material-symbols-outlined text-2xl"
+                                        data-icon="analytics">analytics</span>
+                                    <span class="font-label-caps text-[10px] uppercase tracking-widest">Reports</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-[#1A1A1A] machined-edge p-6 rounded-none">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="font-h3 text-white uppercase tracking-wider">Server Telemetry</h3>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <span
+                                        class="text-[10px] font-label-caps text-green-500 uppercase">Operational</span>
+                                </div>
+                            </div>
+                            <div class="space-y-6">
+                                <div>
+                                    <div
+                                        class="flex justify-between text-[10px] font-label-caps text-zinc-500 uppercase mb-2">
+                                        <span>CPU LOAD</span>
+                                        <span>34%</span>
+                                    </div>
+                                    <div class="h-2 w-full bg-[#0A0A0A] rounded-none overflow-hidden">
+                                        <div class="h-full w-[34%] bg-gradient-to-r from-[#C0392B] to-[#FF6B35]"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div
+                                        class="flex justify-between text-[10px] font-label-caps text-zinc-500 uppercase mb-2">
+                                        <span>MEMORY USAGE</span>
+                                        <span>62%</span>
+                                    </div>
+                                    <div class="h-2 w-full bg-[#0A0A0A] rounded-none overflow-hidden">
+                                        <div class="h-full w-[62%] bg-gradient-to-r from-[#C0392B] to-[#FF6B35]"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div
+                                        class="flex justify-between text-[10px] font-label-caps text-zinc-500 uppercase mb-2">
+                                        <span>API LATENCY</span>
+                                        <span>24MS</span>
+                                    </div>
+                                    <div class="h-2 w-full bg-[#0A0A0A] rounded-none overflow-hidden">
+                                        <div class="h-full w-[15%] bg-gradient-to-r from-[#C0392B] to-[#FF6B35]"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Technical Performance Table -->
+                <div class="bg-[#1A1A1A] machined-edge rounded-none overflow-hidden">
+                    <div class="p-6 border-b border-white/5">
+                        <h3 class="font-h3 text-white uppercase tracking-wider">Top Performing Parts</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left font-body-sm">
+                            <thead class="bg-[#111111] border-b border-white/5">
+                                <tr>
+                                    <th
+                                        class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">
+                                        Part ID</th>
+                                    <th
+                                        class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">
+                                        Component Name</th>
+                                    <th
+                                        class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">
+                                        Manufacturer</th>
+                                    <th
+                                        class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">
+                                        Build Count</th>
+                                    <th
+                                        class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">
+                                        Revenue Contribution</th>
+                                    <th
+                                        class="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">
+                                        Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/5">
+                                <tr class="bg-[#111111] hover:bg-[#242424] transition-colors">
+                                    <td class="px-6 py-4 text-[#C0392B] font-mono">PT-9942</td>
+                                    <td class="px-6 py-4 text-white font-medium">BorgWarner EFR 8374 Turbo</td>
+                                    <td class="px-6 py-4 text-zinc-400">BorgWarner</td>
+                                    <td class="px-6 py-4 text-white">432</td>
+                                    <td class="px-6 py-4 text-white">$1.2M</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex text-orange-500">
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="bg-[#1A1A1A] hover:bg-[#242424] transition-colors">
+                                    <td class="px-6 py-4 text-[#C0392B] font-mono">PT-8120</td>
+                                    <td class="px-6 py-4 text-white font-medium">Ohlins Road &amp; Track Coilovers</td>
+                                    <td class="px-6 py-4 text-zinc-400">Ohlins</td>
+                                    <td class="px-6 py-4 text-white">318</td>
+                                    <td class="px-6 py-4 text-white">$745K</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex text-orange-500">
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm">star</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="bg-[#111111] hover:bg-[#242424] transition-colors">
+                                    <td class="px-6 py-4 text-[#C0392B] font-mono">PT-4421</td>
+                                    <td class="px-6 py-4 text-white font-medium">Brembo GT Big Brake Kit</td>
+                                    <td class="px-6 py-4 text-zinc-400">Brembo</td>
+                                    <td class="px-6 py-4 text-white">285</td>
+                                    <td class="px-6 py-4 text-white">$912K</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex text-orange-500">
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 1;">star</span>
+                                            <span class="material-symbols-outlined text-sm"
+                                                style="font-variation-settings: 'FILL' 0.5;">star_half</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
