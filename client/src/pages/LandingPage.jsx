@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchCurrentUser } from "../services/api.js";
+import { fetchCurrentUser, setAuthToken } from "../services/api.js";
 import heroImage from "../assets/hero_car.png";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -17,6 +18,11 @@ const LandingPage = () => {
       }
     };
     checkUser();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("modmyride_theme", "dark");
+    document.body.classList.remove("light-mode");
   }, []);
 
   useEffect(() => {
@@ -41,6 +47,13 @@ const LandingPage = () => {
     }
   };
 
+  const handleLogout = () => {
+    setAuthToken(null);
+    setUser(null);
+    setIsProfileMenuOpen(false);
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-[#1d100e] text-[#f7ddd9] font-body-md overflow-x-hidden">
       {/* Navbar */}
@@ -58,12 +71,54 @@ const LandingPage = () => {
           <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
         </div>
 
-        <button
-          onClick={handleStartTuning}
-          className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
-        >
-          {user ? 'Dashboard' : 'Get Started'}
-        </button>
+        {user ? (
+          <div className="flex items-center gap-4 relative">
+            <button
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="h-9 w-9 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden hover:border-[#C0392B] transition-all group"
+            >
+              <span className="material-symbols-outlined text-zinc-500 group-hover:text-white text-base">person</span>
+            </button>
+
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 top-12 w-64 bg-[#1A1A1A] machined-edge shadow-2xl z-50 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                <div className="border-b border-white/5 pb-4">
+                  <p className="font-['Oswald'] text-white uppercase text-xs tracking-widest mb-1">{user.username || 'User'}</p>
+                  <p className="text-zinc-500 text-[10px] truncate">{user.email}</p>
+                </div>
+
+                <div className="space-y-1">
+                  {user.role === 'admin' && (
+                    <button
+                      onClick={() => navigate("/admin")}
+                      className="w-full flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-white/5 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
+                    >
+                      <span className="material-symbols-outlined text-sm">dashboard</span>
+                      <span>Admin Dashboard</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="border-t border-white/5 pt-4">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 text-[#C0392B] hover:bg-[#C0392B]/10 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
+                  >
+                    <span className="material-symbols-outlined text-sm">logout</span>
+                    <span>Logout Account</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => navigate("/auth")}
+            className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
+          >
+            Sign In
+          </button>
+        )}
       </nav>
 
       {/* Hero Section */}

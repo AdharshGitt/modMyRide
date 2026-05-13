@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchCurrentUser, fetchUserProfiles, deleteUserProfile } from "../services/api.js";
+import { fetchCurrentUser, fetchUserProfiles, deleteUserProfile, setAuthToken } from "../services/api.js";
 
 const SavedProfilesPage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState([]);
+
+  useEffect(() => {
+    localStorage.setItem("modmyride_theme", "dark");
+    document.body.classList.remove("light-mode");
+  }, []);
 
   useEffect(() => {
     document.title = "ModMyRide | Saved Profiles";
@@ -51,6 +57,13 @@ const SavedProfilesPage = () => {
     }
   };
 
+  const handleLogout = () => {
+    setAuthToken(null);
+    setUser(null);
+    setIsProfileMenuOpen(false);
+    navigate("/");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1d100e] flex items-center justify-center">
@@ -76,12 +89,54 @@ const SavedProfilesPage = () => {
           <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-xs text-white border-b-2 border-[#C0392B] pb-1 transition-colors">Saved Profiles</button>
         </div>
 
-        <button 
-          onClick={handleStartTuning}
-          className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
-        >
-          {user ? 'Dashboard' : 'Get Started'}
-        </button>
+        {user ? (
+          <div className="flex items-center gap-4 relative">
+            <button
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="h-9 w-9 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden hover:border-[#C0392B] transition-all group"
+            >
+              <span className="material-symbols-outlined text-zinc-500 group-hover:text-white text-base">person</span>
+            </button>
+
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 top-12 w-64 bg-[#1A1A1A] machined-edge shadow-2xl z-50 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                <div className="border-b border-white/5 pb-4">
+                  <p className="font-['Oswald'] text-white uppercase text-xs tracking-widest mb-1">{user.username || 'User'}</p>
+                  <p className="text-zinc-500 text-[10px] truncate">{user.email}</p>
+                </div>
+
+                <div className="space-y-1">
+                  {user.role === 'admin' && (
+                    <button
+                      onClick={() => navigate("/admin")}
+                      className="w-full flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-white/5 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
+                    >
+                      <span className="material-symbols-outlined text-sm">dashboard</span>
+                      <span>Admin Dashboard</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="border-t border-white/5 pt-4">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 text-[#C0392B] hover:bg-[#C0392B]/10 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
+                  >
+                    <span className="material-symbols-outlined text-sm">logout</span>
+                    <span>Logout Account</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => navigate("/auth")}
+            className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
+          >
+            Sign In
+          </button>
+        )}
       </nav>
 
       <main className="pt-32 pb-24 px-8 md:px-16 max-w-7xl mx-auto">
@@ -101,7 +156,7 @@ const SavedProfilesPage = () => {
               <div key={profile._id} className="group bg-[#1A1A1A] border border-white/5 machined-edge overflow-hidden transition-all hover:border-[#C0392B]/50 hover:-translate-y-2">
                 <div className="relative aspect-video overflow-hidden">
                   <img 
-                    src={profile.image || (profile.vehicle.type === 'bike' ? "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=800" : "https://images.unsplash.com/photo-1603386329225-868f9b1ee6c9?auto=format&fit=crop&q=80&w=800")} 
+                    src={profile.image || (profile.vehicle?.type === 'bike' ? "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&q=80&w=800" : "https://images.unsplash.com/photo-1603386329225-868f9b1ee6c9?auto=format&fit=crop&q=80&w=800")} 
                     alt={profile.name} 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                   />
@@ -113,7 +168,7 @@ const SavedProfilesPage = () => {
                 <div className="p-8 space-y-6">
                   <div>
                     <h3 className="font-['Oswald'] text-2xl font-bold text-white uppercase mb-1 truncate">{profile.name}</h3>
-                    <p className="text-zinc-500 text-sm font-['Oswald'] uppercase tracking-wider">{profile.vehicle.make} {profile.vehicle.model} • {profile.vehicle.year}</p>
+                    <p className="text-zinc-500 text-sm font-['Oswald'] uppercase tracking-wider">{profile.vehicle?.make} {profile.vehicle?.model} • {profile.vehicle?.year}</p>
                   </div>
                   
                   <div className="flex justify-between items-center text-zinc-600 text-xs">

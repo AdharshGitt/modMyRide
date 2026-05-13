@@ -142,18 +142,40 @@ body.light-mode .bg-\[\#111111\] {
   background-color: #f8fafc !important;
 }
 
+body.light-mode .bg-\[\#1d100e\] {
+  background-color: #f1f5f9 !important;
+}
+
+body.light-mode .bg-\[\#170b09\] {
+  background-color: #ffffff !important;
+}
+
+body.light-mode .bg-\[\#2a1c1a\] {
+  background-color: #f8fafc !important;
+}
+
+body.light-mode .bg-\[\#241412\] {
+  background-color: #f1f5f9 !important;
+}
+
 body.light-mode .text-white {
   color: #0f172a !important;
 }
 
+body.light-mode .text-\[\#f7ddd9\] {
+  color: #0f172a !important;
+}
+
 body.light-mode .text-zinc-400, 
-body.light-mode .text-zinc-500 {
+body.light-mode .text-zinc-500,
+body.light-mode .text-zinc-600 {
   color: #64748b !important;
 }
 
 body.light-mode .border-white\/5,
-body.light-mode .border-white\/10 {
-  border-color: rgba(0, 0, 0, 0.05) !important;
+body.light-mode .border-white\/10,
+body.light-mode .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
 body.light-mode .machined-edge {

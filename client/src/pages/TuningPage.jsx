@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { fetchCurrentUser, fetchVehicles, fetchUpgrades, saveUserProfile, fetchUserProfileById } from "../services/api.js";
+import { fetchCurrentUser, fetchVehicles, fetchUpgrades, saveUserProfile, fetchUserProfileById, setAuthToken } from "../services/api.js";
 
 const TuningPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const profileId = searchParams.get("profileId");
   const [user, setUser] = useState(null);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [vehicles, setVehicles] = useState([]);
   const [upgrades, setUpgrades] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,11 @@ const TuningPage = () => {
     budget: 50000,
     driverName: ""
   });
+
+  useEffect(() => {
+    localStorage.setItem("modmyride_theme", "dark");
+    document.body.classList.remove("light-mode");
+  }, []);
 
   useEffect(() => {
     document.title = "ModMyRide | Performance Recommendation";
@@ -43,17 +49,17 @@ const TuningPage = () => {
         if (profileId) {
           try {
             const { profile } = await fetchUserProfileById(profileId);
-            if (profile) {
+            if (profile && profile.vehicle) {
               setSelection({
-                type: profile.vehicle.type,
-                brand: profile.vehicle.make,
-                model: profile.vehicle.model,
-                year: profile.vehicle.year,
-                fuelType: profile.vehicle.fuelType,
-                transmission: profile.vehicle.transmission,
-                goal: profile.goal,
-                budget: profile.totalBudget,
-                driverName: profile.name
+                type: profile.vehicle.type || "car",
+                brand: profile.vehicle.make || "",
+                model: profile.vehicle.model || "",
+                year: profile.vehicle.year || "",
+                fuelType: profile.vehicle.fuelType || "",
+                transmission: profile.vehicle.transmission || "",
+                goal: profile.goal || "Performance",
+                budget: profile.totalBudget || 50000,
+                driverName: profile.name || ""
               });
               setStep(4);
             }
@@ -83,6 +89,13 @@ const TuningPage = () => {
     } else {
       navigate("/auth");
     }
+  };
+
+  const handleLogout = () => {
+    setAuthToken(null);
+    setUser(null);
+    setIsProfileMenuOpen(false);
+    navigate("/");
   };
 
   const filteredVehicles = useMemo(() => {
@@ -204,11 +217,15 @@ const TuningPage = () => {
     <div className="flex items-center justify-center gap-12 mb-20 relative">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md h-px bg-zinc-800 -z-10"></div>
       {steps.map((s) => (
-        <div key={s.num} className="flex flex-col items-center gap-3">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-['Oswald'] text-sm font-bold border-2 transition-all ${step === s.num ? 'bg-[#C0392B] border-[#C0392B] text-white' : step > s.num ? 'bg-zinc-800 border-zinc-800 text-zinc-500' : 'bg-[#1d100e] border-zinc-800 text-zinc-600'}`}>
+        <div 
+          key={s.num} 
+          onClick={() => setStep(s.num)}
+          className="flex flex-col items-center gap-3 cursor-pointer group"
+        >
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-['Oswald'] text-sm font-bold border-2 transition-all ${step === s.num ? 'bg-[#C0392B] border-[#C0392B] text-white' : step > s.num ? 'bg-zinc-800 border-zinc-800 text-zinc-500 group-hover:border-[#C0392B]/50' : 'bg-[#1d100e] border-zinc-800 text-zinc-600 group-hover:border-[#C0392B]/30'}`}>
             {s.num}
           </div>
-          <span className={`font-['Oswald'] text-[10px] uppercase tracking-widest transition-colors ${step === s.num ? 'text-[#C0392B]' : 'text-zinc-600'}`}>{s.label}</span>
+          <span className={`font-['Oswald'] text-[10px] uppercase tracking-widest transition-colors ${step === s.num ? 'text-[#C0392B]' : 'text-zinc-600 group-hover:text-zinc-400'}`}>{s.label}</span>
         </div>
       ))}
     </div>
@@ -532,16 +549,16 @@ const TuningPage = () => {
               <p className="text-white/60 font-label-caps text-[10px] uppercase tracking-widest mb-1">Estimated Total Project Cost</p>
               <h2 className="text-white font-['Oswald'] text-4xl font-bold uppercase">₹{totalCost.toLocaleString()}</h2>
             </div>
-            <div className="flex gap-4 px-8 pb-6 sm:pb-0">
-              <button 
-                onClick={handleSaveBuild}
-                disabled={saving}
-                className="px-8 py-3 bg-white text-[#1d100e] font-['Oswald'] font-bold uppercase text-xs tracking-widest hover:bg-white/90 transition-all disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save Build'}
-              </button>
-              <button className="px-8 py-3 bg-[#1d100e] text-white font-['Oswald'] font-bold uppercase text-xs tracking-widest hover:bg-black transition-all">Connect to Tuner</button>
-            </div>
+             <div className="flex gap-4 px-8 pb-6 sm:pb-0">
+               <button 
+                 onClick={handleSaveBuild}
+                 disabled={saving}
+                 className="px-8 py-3 bg-white text-[#1d100e] font-['Oswald'] font-bold uppercase text-xs tracking-widest hover:bg-white/90 transition-all disabled:opacity-50"
+               >
+                 {saving ? 'Saving...' : 'Save Build'}
+               </button>
+               <button className="px-8 py-3 bg-[#1d100e] text-white font-['Oswald'] font-bold uppercase text-xs tracking-widest hover:bg-black transition-all">Connect to Tuner</button>
+             </div>
           </div>
         </div>
 
@@ -574,12 +591,54 @@ const TuningPage = () => {
           <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
         </div>
 
-        <button 
-          onClick={handleStartTuning}
-          className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
-        >
-          {user ? 'Dashboard' : 'Get Started'}
-        </button>
+        {user ? (
+          <div className="flex items-center gap-4 relative">
+            <button
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="h-9 w-9 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden hover:border-[#C0392B] transition-all group"
+            >
+              <span className="material-symbols-outlined text-zinc-500 group-hover:text-white text-base">person</span>
+            </button>
+
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 top-12 w-64 bg-[#1A1A1A] machined-edge shadow-2xl z-50 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                <div className="border-b border-white/5 pb-4">
+                  <p className="font-['Oswald'] text-white uppercase text-xs tracking-widest mb-1">{user.username || 'User'}</p>
+                  <p className="text-zinc-500 text-[10px] truncate">{user.email}</p>
+                </div>
+
+                <div className="space-y-1">
+                  {user.role === 'admin' && (
+                    <button
+                      onClick={() => navigate("/admin")}
+                      className="w-full flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-white/5 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
+                    >
+                      <span className="material-symbols-outlined text-sm">dashboard</span>
+                      <span>Admin Dashboard</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="border-t border-white/5 pt-4">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 text-[#C0392B] hover:bg-[#C0392B]/10 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
+                  >
+                    <span className="material-symbols-outlined text-sm">logout</span>
+                    <span>Logout Account</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => navigate("/auth")}
+            className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
+          >
+            Sign In
+          </button>
+        )}
       </nav>
 
       <main className="pt-32 pb-24 px-8 md:px-16 max-w-7xl mx-auto min-h-[60vh]">

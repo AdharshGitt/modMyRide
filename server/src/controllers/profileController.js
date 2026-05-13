@@ -1,4 +1,6 @@
 import SavedProfile from "../models/SavedProfile.js";
+import Vehicle from "../models/Vehicle.js";
+import Upgrade from "../models/Upgrade.js";
 
 export const saveProfile = async (req, res) => {
   try {
