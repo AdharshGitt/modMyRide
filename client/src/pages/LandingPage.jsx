@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchCurrentUser, setAuthToken } from "../services/api.js";
-import heroImage from "../assets/hero_car.png";
+import heroImage from "../assets/hero_honda_ktm_composite.png";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -57,79 +57,82 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-[#1d100e] text-[#f7ddd9] font-body-md overflow-x-hidden">
       {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/80 backdrop-blur-md border-b border-white/5 h-20 flex items-center justify-between px-8 md:px-16">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
-            <span className="material-symbols-outlined text-white -rotate-45 text-lg">speed</span>
+      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/80 backdrop-blur-md border-b border-white/5 h-20 flex items-center justify-center px-8 md:px-16">
+        <div className="max-w-7xl w-full flex items-center justify-between">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="w-8 h-8 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
+              <span className="material-symbols-outlined text-white -rotate-45 text-lg">speed</span>
+            </div>
+            <span className="font-['Oswald'] text-2xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
           </div>
-          <span className="font-['Oswald'] text-2xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
-        </div>
 
-        <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="font-['Oswald'] uppercase tracking-widest text-xs text-white hover:text-[#C0392B] transition-colors">Home</button>
-          <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Recommendation</button>
-          <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
-        </div>
+          <div className="hidden md:flex items-center gap-10">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-white border-b-2 border-[#C0392B] pb-1 transition-colors">Home</button>
+            <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Recommendation</button>
+            <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
+          </div>
 
-        {user ? (
-          <div className="flex items-center gap-4 relative">
-            <button
-              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="h-9 w-9 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden hover:border-[#C0392B] transition-all group"
-            >
-              <span className="material-symbols-outlined text-zinc-500 group-hover:text-white text-base">person</span>
-            </button>
+          {user ? (
+            <div className="flex items-center gap-4 relative">
+              <button
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="h-9 w-9 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden hover:border-[#C0392B] transition-all group"
+              >
+                <span className="material-symbols-outlined text-zinc-500 group-hover:text-white text-base">person</span>
+              </button>
 
-            {isProfileMenuOpen && (
-              <div className="absolute right-0 top-12 w-64 bg-[#1A1A1A] machined-edge shadow-2xl z-50 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
-                <div className="border-b border-white/5 pb-4">
-                  <p className="font-['Oswald'] text-white uppercase text-xs tracking-widest mb-1">{user.username || 'User'}</p>
-                  <p className="text-zinc-500 text-[10px] truncate">{user.email}</p>
-                </div>
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 top-12 w-64 bg-[#1A1A1A] machined-edge shadow-2xl z-50 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                  <div className="border-b border-white/5 pb-4">
+                    <p className="font-['Oswald'] text-white uppercase text-xs tracking-widest mb-1">{user.username || 'User'}</p>
+                    <p className="text-zinc-500 text-[10px] truncate">{user.email}</p>
+                  </div>
 
-                <div className="space-y-1">
-                  {user.role === 'admin' && (
+                  <div className="space-y-1">
+                    {user.role === 'admin' && (
+                      <button
+                        onClick={() => navigate("/admin")}
+                        className="w-full flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-white/5 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
+                      >
+                        <span className="material-symbols-outlined text-sm">dashboard</span>
+                        <span>Admin Dashboard</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="border-t border-white/5 pt-4">
                     <button
-                      onClick={() => navigate("/admin")}
-                      className="w-full flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-white/5 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 text-[#C0392B] hover:bg-[#C0392B]/10 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
                     >
-                      <span className="material-symbols-outlined text-sm">dashboard</span>
-                      <span>Admin Dashboard</span>
+                      <span className="material-symbols-outlined text-sm">logout</span>
+                      <span>Logout Account</span>
                     </button>
-                  )}
+                  </div>
                 </div>
-
-                <div className="border-t border-white/5 pt-4">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2 text-[#C0392B] hover:bg-[#C0392B]/10 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
-                  >
-                    <span className="material-symbols-outlined text-sm">logout</span>
-                    <span>Logout Account</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <button
-            onClick={() => navigate("/auth")}
-            className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
-          >
-            Sign In
-          </button>
-        )}
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate("/auth")}
+              className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
+            >
+              Sign In
+            </button>
+          )}
+        </div>
       </nav>
 
       {/* Hero Section */}
       <section id="home" className="relative h-screen flex items-center pt-20">
-        <div className="absolute inset-0 z-0">
+        <div className="absolute top-0 right-0 w-full md:w-[55%] h-full z-0 overflow-hidden">
           <img
             src={heroImage}
-            alt="Performance Car"
-            className="w-full h-full object-cover opacity-60"
+            alt="Honda City Type 2 and KTM 390 ADV Performance Engines"
+            className="w-full h-full object-cover object-left opacity-95"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1d100e] via-[#1d100e]/40 to-transparent"></div>
+          {/* Minimalistic blend - extremely sharp to maximize engine visibility */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1d100e] via-[#1d100e] via-1% md:via-5% to-transparent"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#1d100e] via-transparent to-transparent"></div>
         </div>
 
@@ -147,7 +150,7 @@ const LandingPage = () => {
               onClick={handleStartTuning}
               className="px-10 py-4 bg-[#C0392B] text-white font-['Oswald'] uppercase tracking-widest text-sm hover:scale-105 transition-transform"
             >
-              {user ? 'Go to Tuning' : 'Start Tuning'}
+              Start Tuning
             </button>
             <button 
               onClick={() => document.getElementById('recommend')?.scrollIntoView({ behavior: 'smooth' })}

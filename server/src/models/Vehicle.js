@@ -20,6 +20,7 @@ const vehicleSchema = new mongoose.Schema(
     stockPower: { type: Number, default: 0 },
     mileage: { type: String, default: "" },
     torque: { type: String, default: "" },
+    torqueNM: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

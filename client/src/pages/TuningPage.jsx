@@ -2,6 +2,14 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchCurrentUser, fetchVehicles, fetchUpgrades, saveUserProfile, fetchUserProfileById, setAuthToken } from "../services/api.js";
 
+// Helper to extract numeric values from strings (e.g., "15 HP" -> 15)
+const getNumericGain = (val, stringVal) => {
+  if (typeof val === 'number' && val !== 0) return val;
+  if (!stringVal) return 0;
+  const match = stringVal.match(/(\d+(\.\d+)?)/);
+  return match ? parseFloat(match[1]) : 0;
+};
+
 const TuningPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -24,6 +32,9 @@ const TuningPage = () => {
     budget: 50000,
     driverName: ""
   });
+  const [mode, setMode] = useState("auto"); // "auto" or "manual"
+  const [manualSelection, setManualSelection] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("Air Intake");
 
   useEffect(() => {
     localStorage.setItem("modmyride_theme", "dark");
@@ -160,22 +171,134 @@ const TuningPage = () => {
     }
   }, [selection.type, selection.fuelType, availableTransmissions]);
 
-  const recommendedUpgrades = useMemo(() => {
+  // Recommendation Engine Logic
+  const getScoredUpgrades = (categoryUpgrades) => {
+    return categoryUpgrades.map(u => {
+      let score = 0;
+      let reasons = [];
+      
+      const hpGain = getNumericGain(u.performanceGainHP, u.performanceGain);
+      const torqueGain = getNumericGain(u.torqueGainNM, u.torque);
+      
+      if (hpGain > 0) {
+        score += hpGain * 4;
+        reasons.push(`+${hpGain} HP boost`);
+      }
+      
+      if (torqueGain > 0) {
+        score += torqueGain * 2;
+        reasons.push(`Increases low-end torque`);
+      }
+      
+      if (u.goals.includes(selection.goal)) {
+        score += 50;
+        reasons.push(`Perfect for ${selection.goal}`);
+      }
+      
+      const priceRatio = u.price / selection.budget;
+      score -= priceRatio * 20;
+
+      return { 
+        ...u, 
+        totalScore: Math.round(score),
+        reason: reasons.slice(0, 2).join(" • ") || "Balanced upgrade",
+        parsedHP: hpGain,
+        parsedTorque: torqueGain
+      };
+    }).sort((a, b) => b.totalScore - a.totalScore);
+  };
+
+  const autoBuild = useMemo(() => {
     if (!selectedVehicle) return [];
     
-    // Filter upgrades by vehicle type and goal
-    return upgrades.filter(u => 
+    const categories = ["Air Intake", "Exhaust Systems", "ECU & Tuning", "Suspension", "Brakes", "Wheels & Tyres", "Lighting"];
+    const build = [];
+    let currentBudget = selection.budget;
+
+    // First filter all compatible parts STRICTLY by Goal and Vehicle
+    const compatible = upgrades.filter(u => 
+      u.type.toLowerCase() === selection.type.toLowerCase() &&
+      u.goals.includes(selection.goal) && // STRICT GOAL FILTER
+      (!u.compatibleVehicles?.length || u.compatibleVehicles.includes(selectedVehicle._id)) &&
+      (!u.stage || u.stage !== "Stage 3" || selection.budget > 100000)
+    );
+
+    categories.forEach(cat => {
+      const catParts = compatible.filter(p => p.category === cat);
+      const scored = getScoredUpgrades(catParts);
+      
+      if (scored.length > 0) {
+        const best = scored[0];
+        if (best.price <= currentBudget) {
+          build.push(best);
+          currentBudget -= best.price;
+        }
+      }
+    });
+
+    return build;
+  }, [upgrades, selectedVehicle, selection.type, selection.goal, selection.budget]);
+
+  const manualCategories = useMemo(() => {
+    if (!selectedVehicle) return [];
+    const compatible = upgrades.filter(u => 
       u.type.toLowerCase() === selection.type.toLowerCase() &&
       u.goals.includes(selection.goal) &&
-      (!u.compatibleFuels?.length || u.compatibleFuels.includes(selection.fuelType)) &&
-      (!u.compatibleTransmissions?.length || u.compatibleTransmissions.includes(selection.transmission)) &&
-      u.price <= selection.budget
-    ).slice(0, 6); // Limit to 6 as per UI
-  }, [upgrades, selectedVehicle, selection.type, selection.goal, selection.budget, selection.fuelType, selection.transmission]);
+      (!u.compatibleVehicles?.length || u.compatibleVehicles.includes(selectedVehicle._id))
+    );
+    const cats = [...new Set(compatible.map(u => u.category))];
+    const order = ["Air Intake", "Exhaust Systems", "ECU & Tuning", "Suspension", "Brakes", "Wheels & Tyres", "Lighting"];
+    return order.filter(cat => cats.includes(cat));
+  }, [upgrades, selectedVehicle, selection.type, selection.goal]);
 
-  const totalCost = useMemo(() => {
-    return recommendedUpgrades.reduce((sum, u) => sum + u.price, 0);
-  }, [recommendedUpgrades]);
+  useEffect(() => {
+    if (manualCategories.length > 0 && !manualCategories.includes(activeCategory)) {
+      setActiveCategory(manualCategories[0]);
+    }
+  }, [manualCategories, activeCategory]);
+
+  const activeBuild = useMemo(() => {
+    return mode === "auto" ? autoBuild : manualSelection;
+  }, [mode, autoBuild, manualSelection]);
+
+  const performanceStats = useMemo(() => {
+    if (!selectedVehicle) return null;
+
+    const stockHP = selectedVehicle.stockPower || 0;
+    const stockTorque = selectedVehicle.torqueNM || getNumericGain(0, selectedVehicle.torque) || 300;
+    
+    const totalHPGain = activeBuild.reduce((sum, u) => sum + getNumericGain(u.performanceGainHP, u.performanceGain), 0);
+    const totalTorqueGain = activeBuild.reduce((sum, u) => sum + getNumericGain(u.torqueGainNM, u.torque), 0);
+    const totalMileageImpact = activeBuild.reduce((sum, u) => sum + (u.mileageImpact || 0), 0);
+    
+    const tunedHP = stockHP + totalHPGain;
+    const tunedTorque = stockTorque + totalTorqueGain;
+    
+    const budgetUsed = activeBuild.reduce((sum, u) => sum + u.price, 0);
+    const budgetRemaining = selection.budget - budgetUsed;
+    
+    const buildScore = Math.min(100, Math.round(
+      (totalHPGain / (stockHP * 0.4) * 40) + 
+      (totalTorqueGain / (stockTorque * 0.4) * 30) + 
+      (activeBuild.length / 7 * 30)
+    ));
+
+    return {
+      stockHP,
+      tunedHP,
+      stockTorque,
+      tunedTorque,
+      totalHPGain,
+      totalTorqueGain,
+      totalMileageImpact,
+      budgetUsed,
+      budgetRemaining,
+      buildScore,
+      hpIncreasePercent: Math.round((totalHPGain / stockHP) * 100) || 0
+    };
+  }, [selectedVehicle, activeBuild, selection.budget]);
+
+  const totalCost = performanceStats?.budgetUsed || 0;
 
   const steps = [
     { num: 1, label: "SELECT VEHICLE" },
@@ -195,7 +318,7 @@ const TuningPage = () => {
       await saveUserProfile({
         name: selection.driverName || `${selectedVehicle.make} ${selectedVehicle.model} Build`,
         vehicleId: selectedVehicle._id,
-        upgradeIds: recommendedUpgrades.map(u => u._id),
+        upgradeIds: activeBuild.map(u => u._id),
         goal: selection.goal,
         totalBudget: selection.budget,
         totalCost: totalCost
@@ -240,24 +363,27 @@ const TuningPage = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {[
-          { id: 'car', title: 'CAR', desc: 'Hatchbacks, Sedans, SUVs & Performance Coupes', icon: 'directions_car' },
-          { id: 'bike', title: 'BIKE', desc: 'Street, Sport, Cruisers & Adventure Tourers', icon: 'motorcycle' }
+          { id: 'car', title: 'CAR', desc: 'Hatchbacks, Sedans, SUVs & Performance Coupes' },
+          { id: 'bike', title: 'BIKE', desc: 'Street, Sport, Cruisers & Adventure Tourers' }
         ].map(item => (
           <button
             key={item.id}
             onClick={() => setSelection({...selection, type: item.id, brand: "", model: "", year: ""})}
-            className={`relative p-12 machined-edge flex flex-col items-center gap-6 transition-all group ${selection.type === item.id ? 'border-[#C0392B]/50 bg-[#2a1c1a]/30' : 'bg-[#1A1A1A] hover:bg-[#242424]'}`}
+            className={`relative p-10 machined-edge flex flex-col items-start gap-4 transition-all group ${selection.type === item.id ? 'bg-[#C0392B]/10 border-[#C0392B]/50' : 'bg-[#111111] hover:bg-[#1A1A1A] border-white/5'}`}
           >
             {selection.type === item.id && (
-              <span className="absolute top-4 right-4 bg-[#C0392B] text-white font-label-caps text-[8px] px-2 py-1 uppercase">Selected</span>
+              <div className="absolute top-0 right-0 p-2">
+                <div className="bg-[#C0392B] text-white font-label-caps text-[8px] px-3 py-1 uppercase tracking-widest">Selected</div>
+              </div>
             )}
-            <div className="w-32 h-32 bg-zinc-800 flex items-center justify-center mb-2">
-               <span className="material-symbols-outlined text-5xl opacity-20">{item.icon}</span>
+            <div className="flex items-center gap-4">
+              <div className={`w-1 h-12 transition-all ${selection.type === item.id ? 'bg-[#C0392B]' : 'bg-zinc-800 group-hover:bg-zinc-700'}`}></div>
+              <div className="text-left">
+                <h3 className="font-['Oswald'] text-2xl font-bold uppercase text-white tracking-tight">{item.title}</h3>
+                <p className="text-zinc-500 text-[10px] font-label-caps tracking-widest uppercase opacity-60 mt-1">{item.id} Category</p>
+              </div>
             </div>
-            <div className="text-center">
-              <h3 className="font-['Oswald'] text-2xl font-bold uppercase text-white mb-2">{item.title}</h3>
-              <p className="text-zinc-500 text-xs font-body-sm max-w-[200px]">{item.desc}</p>
-            </div>
+            <p className="text-zinc-500 text-xs font-body-sm max-w-xs mt-2 leading-relaxed">{item.desc}</p>
           </button>
         ))}
       </div>
@@ -267,7 +393,7 @@ const TuningPage = () => {
           <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Select Brand</label>
           <div className="relative">
             <select 
-              className="w-full bg-[#111111] border border-white/10 p-4 text-white outline-none focus:border-[#C0392B] appearance-none"
+              className="w-full bg-[#111111] border border-white/10 p-4 pr-12 text-white outline-none focus:border-[#C0392B] appearance-none"
               value={selection.brand}
               onChange={(e) => setSelection({...selection, brand: e.target.value, model: "", year: ""})}
             >
@@ -283,7 +409,7 @@ const TuningPage = () => {
           <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model Name</label>
           <div className="relative">
             <select 
-              className="w-full bg-[#111111] border border-white/10 p-4 text-white outline-none focus:border-[#C0392B] appearance-none"
+              className="w-full bg-[#111111] border border-white/10 p-4 pr-12 text-white outline-none focus:border-[#C0392B] appearance-none"
               value={selection.model}
               onChange={(e) => setSelection({...selection, model: e.target.value, year: ""})}
               disabled={!selection.brand}
@@ -300,7 +426,7 @@ const TuningPage = () => {
           <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Manufacturing Year</label>
           <div className="relative">
             <select 
-              className="w-full bg-[#111111] border border-white/10 p-4 text-white outline-none focus:border-[#C0392B] appearance-none"
+              className="w-full bg-[#111111] border border-white/10 p-4 pr-12 text-white outline-none focus:border-[#C0392B] appearance-none"
               value={selection.year}
               onChange={(e) => setSelection({...selection, year: e.target.value})}
               disabled={!selection.model}
@@ -320,7 +446,7 @@ const TuningPage = () => {
               <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Engine Type</label>
               <div className="relative">
                 <select 
-                  className="w-full bg-[#111111] border border-white/10 p-4 text-white outline-none focus:border-[#C0392B] appearance-none"
+                  className="w-full bg-[#111111] border border-white/10 p-4 pr-12 text-white outline-none focus:border-[#C0392B] appearance-none"
                   value={selection.fuelType}
                   onChange={(e) => setSelection({...selection, fuelType: e.target.value, transmission: ""})}
                   disabled={!selection.year}
@@ -337,7 +463,7 @@ const TuningPage = () => {
               <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Transmission</label>
               <div className="relative">
                 <select 
-                  className="w-full bg-[#111111] border border-white/10 p-4 text-white outline-none focus:border-[#C0392B] appearance-none"
+                  className="w-full bg-[#111111] border border-white/10 p-4 pr-12 text-white outline-none focus:border-[#C0392B] appearance-none"
                   value={selection.transmission}
                   onChange={(e) => setSelection({...selection, transmission: e.target.value})}
                   disabled={!selection.fuelType}
@@ -370,9 +496,9 @@ const TuningPage = () => {
           }
         }}
         disabled={!selection.brand || !selection.model || !selection.year || (selection.type === 'car' && (!selection.fuelType || !selection.transmission))}
-        className={`w-full py-6 font-['Oswald'] font-bold uppercase tracking-[0.2em] transition-all machined-edge ${(!selection.brand || !selection.model || !selection.year || (selection.type === 'car' && (!selection.fuelType || !selection.transmission))) ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-[#C0392B] text-white hover:bg-[#a93226] hover:shadow-[0_0_30px_rgba(192,57,43,0.3)]'}`}
+        className={`w-full py-4 font-['Oswald'] font-bold uppercase tracking-[0.2em] text-sm transition-all machined-edge ${(!selection.brand || !selection.model || !selection.year || (selection.type === 'car' && (!selection.fuelType || !selection.transmission))) ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-[#C0392B] text-white hover:bg-[#a93226] hover:shadow-[0_0_30px_rgba(192,57,43,0.3)]'}`}
       >
-        {selection.type === 'bike' ? 'Get Recommendation' : 'Next Step'}
+        {selection.type === 'bike' ? 'Generate Build' : 'Continue to Goal'}
       </button>
     </div>
   );
@@ -384,21 +510,26 @@ const TuningPage = () => {
         <h2 className="text-3xl font-['Oswald'] font-bold uppercase text-white tracking-tight">Step 2: Define Your Goal</h2>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {[
-          { id: 'Performance', label: 'Performance', icon: 'speed' },
-          { id: 'Better Mileage', label: 'Better Mileage', icon: 'eco' },
-          { id: 'Handling', label: 'Handling', icon: 'auto_graph' },
-          { id: 'Off-Road', label: 'Off-Road', icon: 'landscape' },
-          { id: 'Lighting Improvements', label: 'Lighting Improvements', icon: 'highlight' }
+          { id: 'Performance', label: 'Maximum Power', desc: 'HP & Torque', icon: 'speed' },
+          { id: 'Better Mileage', label: 'Eco-Efficiency', desc: 'Fuel Economy', icon: 'eco' },
+          { id: 'Handling', label: 'Precision Control', desc: 'Suspension', icon: 'auto_graph' },
+          { id: 'Off-Road', label: 'Tough Terrain', desc: 'Adventure', icon: 'landscape' },
+          { id: 'Lighting Improvements', label: 'Night Visibility', desc: 'Safety', icon: 'highlight' }
         ].map(goal => (
           <button
             key={goal.id}
             onClick={() => setSelection({...selection, goal: goal.id})}
-            className={`p-8 machined-edge flex flex-col items-center gap-4 transition-all ${selection.goal === goal.id ? 'bg-[#2a1c1a]/30 border-[#C0392B]/50' : 'bg-[#1A1A1A] hover:bg-[#242424]'}`}
+            className={`p-6 machined-edge flex flex-col items-start gap-4 transition-all group ${selection.goal === goal.id ? 'bg-[#C0392B]/10 border-[#C0392B]/50' : 'bg-[#111111] hover:bg-[#1A1A1A] border-white/5'}`}
           >
-            <span className={`material-symbols-outlined text-2xl ${selection.goal === goal.id ? 'text-[#C0392B]' : 'text-zinc-600'}`}>{goal.icon}</span>
-            <span className={`font-['Oswald'] text-[10px] font-bold uppercase tracking-widest ${selection.goal === goal.id ? 'text-[#C0392B]' : 'text-zinc-600'}`}>{goal.label}</span>
+            <div className={`w-10 h-10 flex items-center justify-center transition-all ${selection.goal === goal.id ? 'bg-[#C0392B] text-white' : 'bg-zinc-900 text-zinc-600 group-hover:text-white'}`}>
+              <span className="material-symbols-outlined text-xl">{goal.icon}</span>
+            </div>
+            <div className="text-left">
+              <h3 className={`font-['Oswald'] text-sm font-bold uppercase tracking-widest mb-1 transition-colors ${selection.goal === goal.id ? 'text-white' : 'text-zinc-400'}`}>{goal.label}</h3>
+              <p className="text-[9px] text-zinc-600 font-label-caps uppercase">{goal.desc}</p>
+            </div>
           </button>
         ))}
       </div>
@@ -417,50 +548,64 @@ const TuningPage = () => {
         <h2 className="text-3xl font-['Oswald'] font-bold uppercase text-white tracking-tight">Step 3: Budget & Identity</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Monthly Budget Range</label>
-              <span className="text-lg font-['Oswald'] font-bold text-[#C0392B]">₹{selection.budget.toLocaleString()}</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-[#111111] machined-edge p-8 space-y-8">
+          <div className="space-y-6">
+            <div className="flex justify-between items-end">
+              <div>
+                <label className="font-label-caps text-zinc-600 uppercase tracking-widest text-[9px] block mb-2">Max Investment Range</label>
+                <h3 className="text-3xl font-['Oswald'] font-black text-white">₹{selection.budget.toLocaleString()}</h3>
+              </div>
+              <div className="text-right">
+                <span className="text-[9px] font-label-caps text-zinc-700 uppercase">Tuning Limit</span>
+              </div>
             </div>
-            <input 
-              type="range" 
-              min="15000" 
-              max="200000" 
-              step="5000"
-              value={selection.budget}
-              onChange={(e) => setSelection({...selection, budget: parseInt(e.target.value)})}
-              className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[#C0392B]"
-            />
-            <div className="flex justify-between text-[10px] font-label-caps text-zinc-700">
-              <span>15,000</span>
-              <span>₹2,00,000</span>
+            
+            <div className="relative pt-4">
+              <input 
+                type="range" 
+                min="15000" 
+                max="200000" 
+                step="5000"
+                value={selection.budget}
+                onChange={(e) => setSelection({...selection, budget: parseInt(e.target.value)})}
+                className="w-full h-1.5 bg-zinc-900 rounded-none appearance-none cursor-pointer accent-[#C0392B]"
+              />
+              <div className="flex justify-between mt-4 text-[9px] font-label-caps text-zinc-700 tracking-[0.2em]">
+                <span>₹15,000</span>
+                <span>STREET LIMIT</span>
+                <span>PRO LIMIT</span>
+                <span>₹2,00,000</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Driver Name / Workshop Tag</label>
-          <input 
-            type="text" 
-            placeholder="e.g. Project Night-Fury"
-            value={selection.driverName}
-            onChange={(e) => setSelection({...selection, driverName: e.target.value})}
-            className="w-full bg-[#111111] border border-white/5 p-4 text-white outline-none focus:border-[#C0392B] font-body-sm italic placeholder:text-zinc-800"
-          />
+        <div className="bg-[#111111] machined-edge p-8 flex flex-col justify-center">
+          <label className="block font-label-caps text-zinc-600 uppercase tracking-widest text-[9px] mb-4">Build Identity / Workshop Tag</label>
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="e.g. PROJECT NIGHT-FURY"
+              value={selection.driverName}
+              onChange={(e) => setSelection({...selection, driverName: e.target.value})}
+              className="w-full bg-[#0A0A0A] border border-white/5 p-5 text-white font-['Oswald'] uppercase tracking-widest text-sm outline-none focus:border-[#C0392B] transition-all placeholder:text-zinc-800"
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#C0392B]"></div>
+          </div>
+          <p className="mt-4 text-zinc-700 text-[10px] font-label-caps uppercase">This will be shown on your build summary</p>
         </div>
       </div>
 
       <div className="flex gap-4">
         <button onClick={handleBack} className="flex-1 py-4 border border-white/10 text-white font-['Oswald'] uppercase tracking-widest text-sm hover:bg-white/5 transition-all">Back</button>
-        <button onClick={handleNext} className="flex-[2] py-4 bg-[#C0392B] text-white font-['Oswald'] uppercase tracking-widest text-sm hover:bg-[#a93226] transition-all">Generate My Build</button>
+        <button onClick={handleNext} className="flex-[2] py-4 bg-[#C0392B] text-white font-['Oswald'] uppercase tracking-widest text-sm hover:bg-[#a93226] transition-all">Continue to Generate</button>
       </div>
     </div>
   );
 
   const renderResults = () => {
-    if (!selectedVehicle) {
+    if (!selectedVehicle || !performanceStats) {
       return (
         <div className="text-center py-20 animate-in fade-in zoom-in duration-700">
           <h2 className="text-2xl font-['Oswald'] text-white uppercase">Vehicle Data Missing</h2>
@@ -471,104 +616,258 @@ const TuningPage = () => {
     }
 
     return (
-      <>
-        <div className="bg-[#111111] machined-edge p-8 md:p-12">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+      <div className="space-y-12 animate-in fade-in slide-in-from-bottom duration-700">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+          <div className="flex items-center gap-6">
+            <div className="w-1.5 h-16 bg-[#C0392B]"></div>
             <div>
-              <h1 className="text-5xl md:text-6xl font-['Oswald'] font-black uppercase text-white tracking-tighter leading-tight">{selectedVehicle.make} {selectedVehicle.model}</h1>
-              <p className="text-zinc-600 font-label-caps tracking-[0.2em] text-xs mt-2">PROPOSED STAGE 2 BUILD</p>
-            </div>
-            <div className="bg-[#C0392B]/10 border border-[#C0392B]/30 px-6 py-2">
-               <span className="text-[#C0392B] font-['Oswald'] font-bold text-xs uppercase tracking-widest">Goal: {selection.goal}</span>
+              <h1 className="text-5xl md:text-6xl font-['Oswald'] font-black uppercase text-white tracking-tighter leading-tight">
+                {selectedVehicle.make} {selectedVehicle.model}
+              </h1>
+              <div className="flex items-center gap-4 mt-2">
+                <span className="text-zinc-600 font-label-caps tracking-[0.2em] text-[10px] uppercase">Stage {performanceStats.hpIncreasePercent > 25 ? '3' : performanceStats.hpIncreasePercent > 15 ? '2' : '1'} Performance Build</span>
+                <span className="w-1 h-1 rounded-full bg-zinc-800"></span>
+                <span className="text-[#C0392B] font-label-caps text-[10px] uppercase tracking-widest">{selection.goal} Config</span>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-            <div className="space-y-10">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-[#1d100e] border border-white/5 p-8">
-                  <p className="text-zinc-600 font-label-caps text-[10px] uppercase tracking-widest mb-4">Stock Power</p>
+          <div className="flex bg-[#1A1A1A] p-1 machined-edge">
+            <button 
+              onClick={() => setMode("auto")}
+              className={`px-6 py-3 font-['Oswald'] text-xs font-bold uppercase tracking-widest transition-all ${mode === "auto" ? 'bg-[#C0392B] text-white' : 'text-zinc-500 hover:text-white'}`}
+            >
+              Smart Auto
+            </button>
+            <button 
+              onClick={() => setMode("manual")}
+              className={`px-6 py-3 font-['Oswald'] text-xs font-bold uppercase tracking-widest transition-all ${mode === "manual" ? 'bg-[#C0392B] text-white' : 'text-zinc-500 hover:text-white'}`}
+            >
+              Manual Custom
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Performance Metrics */}
+          <div className="lg:col-span-2 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-[#111111] machined-edge p-6 flex flex-col justify-between h-40">
+                <p className="text-zinc-600 font-label-caps text-[9px] uppercase tracking-widest">Build Score</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-['Oswald'] font-bold text-white">{performanceStats.buildScore}</span>
+                  <span className="text-zinc-700 font-['Oswald'] text-sm">/100</span>
+                </div>
+                <div className="h-1 bg-zinc-900 overflow-hidden">
+                  <div className="h-full bg-[#C0392B] transition-all duration-1000" style={{ width: `${performanceStats.buildScore}%` }}></div>
+                </div>
+              </div>
+              
+              <div className="bg-[#111111] machined-edge p-6 flex flex-col justify-between h-40">
+                <p className="text-zinc-600 font-label-caps text-[9px] uppercase tracking-widest">Power Gain</p>
+                <div className="flex flex-col">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-['Oswald'] font-bold text-white">{selectedVehicle.stockPower || 117}</span>
+                    <span className="text-5xl font-['Oswald'] font-bold text-white">{performanceStats.tunedHP}</span>
                     <span className="text-zinc-700 font-['Oswald'] text-sm">HP</span>
                   </div>
+                  <span className="text-[#27AE60] text-[10px] font-bold mt-1">+{performanceStats.hpIncreasePercent}% VS STOCK</span>
                 </div>
-                <div className="bg-[#1d100e] border border-[#C0392B]/20 p-8">
-                  <p className="text-[#C0392B] font-label-caps text-[10px] uppercase tracking-widest mb-4">Modded Power</p>
-                  <div className="flex flex-col">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-['Oswald'] font-bold text-white">
-                        {Math.round((selectedVehicle.stockPower || 117) * 1.26)}
-                      </span>
-                      <span className="text-zinc-700 font-['Oswald'] text-sm">HP</span>
-                    </div>
-                    <span className="text-[#27AE60] text-[10px] font-bold mt-1">+26% GAIN</span>
-                  </div>
+                <div className="flex justify-between text-[8px] font-label-caps text-zinc-700">
+                  <span>STOCK: {performanceStats.stockHP}HP</span>
                 </div>
               </div>
 
-              <div className="space-y-6">
-                {[
-                  { label: 'POWER DELIVERY (HP)', before: selectedVehicle.stockPower || '117', after: Math.round((selectedVehicle.stockPower || 117) * 1.26), percent: 75, color: '#C0392B' },
-                  { label: 'TORQUE RESPONSE (NM)', before: '300', after: '385', percent: 65, color: '#FF6B35' },
-                  { label: 'FUEL EFFICIENCY (KMPL)', before: '15.2', after: '14.8', percent: 40, color: '#444' }
-                ].map((stat, i) => (
-                  <div key={i} className="space-y-3">
-                    <div className="flex justify-between items-end">
-                      <span className="text-zinc-600 font-label-caps text-[10px] tracking-widest">{stat.label}</span>
-                      <span className="text-white font-['Oswald'] text-xs">{stat.before} ➜ <span className={i === 2 ? 'text-zinc-400' : 'text-[#C0392B]'}>{stat.after}</span></span>
-                    </div>
-                    <div className="h-1.5 bg-zinc-900 w-full">
-                      <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${stat.percent}%`, backgroundColor: stat.color }}></div>
-                    </div>
+              <div className="bg-[#111111] machined-edge p-6 flex flex-col justify-between h-40">
+                <p className="text-zinc-600 font-label-caps text-[9px] uppercase tracking-widest">Torque Gain</p>
+                <div className="flex flex-col">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-['Oswald'] font-bold text-white">{performanceStats.tunedTorque}</span>
+                    <span className="text-zinc-700 font-['Oswald'] text-sm">NM</span>
                   </div>
-                ))}
+                  <span className="text-[#27AE60] text-[10px] font-bold mt-1">+{performanceStats.tunedTorque - performanceStats.stockTorque}NM GAIN</span>
+                </div>
+                <div className="flex justify-between text-[8px] font-label-caps text-zinc-700">
+                  <span>STOCK: {performanceStats.stockTorque}NM</span>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <h3 className="text-zinc-500 font-label-caps text-[10px] uppercase tracking-widest mb-4">Recommended Upgrades ({recommendedUpgrades.length})</h3>
-              <div className="space-y-2">
-                {recommendedUpgrades.length > 0 ? recommendedUpgrades.map((part, i) => (
-                  <div key={i} className="flex justify-between items-center p-5 bg-[#1d100e] machined-edge group hover:border-[#C0392B]/30 transition-all cursor-pointer">
+            {/* Visual Performance Charts */}
+            <div className="bg-[#111111] machined-edge p-8 space-y-8">
+              <h4 className="text-white font-['Oswald'] font-bold uppercase text-xs tracking-widest mb-6 border-b border-white/5 pb-4">Performance Comparison</h4>
+              
+              {[
+                { label: 'HORSEPOWER', stock: performanceStats.stockHP, tuned: performanceStats.tunedHP, color: '#C0392B', max: Math.max(performanceStats.tunedHP, performanceStats.stockHP * 1.5) },
+                { label: 'TORQUE (NM)', stock: performanceStats.stockTorque, tuned: performanceStats.tunedTorque, color: '#FF6B35', max: Math.max(performanceStats.tunedTorque, performanceStats.stockTorque * 1.5) },
+                { label: 'BUILD BALANCE', stock: 50, tuned: performanceStats.buildScore, color: '#27AE60', max: 100 }
+              ].map((chart, i) => (
+                <div key={i} className="space-y-4">
+                  <div className="flex justify-between items-end">
+                    <span className="text-zinc-600 font-label-caps text-[10px] tracking-widest">{chart.label}</span>
                     <div className="flex items-center gap-4">
-                      <span className="material-symbols-outlined text-zinc-700 text-lg group-hover:text-[#C0392B] transition-colors">settings</span>
-                      <h4 className="text-white font-bold uppercase tracking-wide text-xs">{part.name}</h4>
+                       <span className="text-[9px] text-zinc-700 font-label-caps uppercase">Stock: {chart.stock}</span>
+                       <span className="text-xs text-white font-['Oswald']">{chart.tuned}</span>
                     </div>
-                    <span className="text-[#C0392B] font-['Oswald'] text-xs">₹{part.price.toLocaleString()}</span>
                   </div>
-                )) : (
-                  <p className="text-zinc-700 text-xs italic p-4">No upgrades found for this budget and goal.</p>
-                )}
-              </div>
+                  <div className="relative h-4 bg-zinc-900/50">
+                    <div 
+                      className="absolute top-0 left-0 h-full bg-zinc-800 transition-all duration-1000 ease-out" 
+                      style={{ width: `${(chart.stock / chart.max) * 100}%` }}
+                    ></div>
+                    <div 
+                      className="absolute top-0 left-0 h-full opacity-80 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(192,57,43,0.3)]" 
+                      style={{ width: `${(chart.tuned / chart.max) * 100}%`, backgroundColor: chart.color }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
             </div>
+
+            {/* Smart Warnings */}
+            {(performanceStats.hpIncreasePercent > 20 || performanceStats.tunedHP > 200) && (
+              <div className="bg-[#C0392B]/5 border border-[#C0392B]/20 p-6 flex items-start gap-4">
+                <span className="material-symbols-outlined text-[#C0392B]">warning</span>
+                <div>
+                  <h5 className="text-white font-['Oswald'] font-bold text-xs uppercase mb-1">Safety Recommendation</h5>
+                  <p className="text-zinc-500 text-[11px] leading-relaxed">
+                    Significant power increase detected (+{performanceStats.hpIncreasePercent}%). 
+                    We highly recommend upgrading your <strong>Braking System</strong> and <strong>Suspension</strong> to handle the increased load.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="mt-16 bg-gradient-to-r from-[#C0392B] to-[#FF6B35] p-1 flex flex-col sm:flex-row items-center justify-between gap-6 overflow-hidden">
-            <div className="px-8 py-6">
-              <p className="text-white/60 font-label-caps text-[10px] uppercase tracking-widest mb-1">Estimated Total Project Cost</p>
-              <h2 className="text-white font-['Oswald'] text-4xl font-bold uppercase">₹{totalCost.toLocaleString()}</h2>
+          {/* Right Column: Build List / Custom Selector */}
+          <div className="space-y-6">
+            <div className="bg-[#111111] machined-edge p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="text-white font-['Oswald'] font-bold uppercase text-xs tracking-widest">
+                  {mode === "auto" ? "Recommended Package" : "Custom Configuration"}
+                </h4>
+                <span className="text-[10px] text-zinc-600 font-label-caps">{activeBuild.length} Parts</span>
+              </div>
+
+              {mode === "manual" && (
+                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                  {manualCategories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`whitespace-nowrap px-3 py-1.5 text-[9px] font-label-caps tracking-widest border transition-all ${activeCategory === cat ? 'bg-[#C0392B] border-[#C0392B] text-white' : 'border-white/5 text-zinc-500 hover:border-white/20'}`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-3 min-h-[300px]">
+                {mode === "auto" ? (
+                  activeBuild.map((part, i) => (
+                    <div key={i} className="group p-4 bg-zinc-900/50 border border-white/5 hover:border-[#C0392B]/30 transition-all">
+                      <div className="flex justify-between items-start mb-1">
+                        <div>
+                          <p className="text-[8px] text-[#C0392B] font-label-caps">{part.category}</p>
+                          <h5 className="text-white font-bold text-[11px] uppercase tracking-tight">{part.name}</h5>
+                        </div>
+                        <p className="text-white font-['Oswald'] text-[11px]">₹{part.price.toLocaleString()}</p>
+                      </div>
+                      <p className="text-zinc-600 text-[9px] font-body-sm mt-1">{part.reason}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="space-y-4">
+                    {/* Manual Category Browser */}
+                    <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                      {upgrades
+                        .filter(u => 
+                          u.category === activeCategory && 
+                          u.type.toLowerCase() === selection.type.toLowerCase() &&
+                          u.goals.includes(selection.goal) && // STRICT GOAL FILTER
+                          (!u.compatibleVehicles?.length || u.compatibleVehicles.includes(selectedVehicle._id))
+                        )
+                        .map((part, i) => {
+                          const isSelected = manualSelection.find(s => s._id === part._id);
+                          
+                          return (
+                            <div 
+                              key={i} 
+                              onClick={() => {
+                                if (isSelected) {
+                                  setManualSelection(prev => prev.filter(s => s._id !== part._id));
+                                } else {
+                                  // Remove any other part in same category
+                                  setManualSelection(prev => [...prev.filter(s => s.category !== part.category), part]);
+                                }
+                              }}
+                              className={`p-4 border cursor-pointer transition-all ${isSelected ? 'bg-[#C0392B]/10 border-[#C0392B]/50' : 'bg-[#1d100e] border-white/5 hover:border-white/20'}`}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <h5 className="text-white font-bold text-[11px] uppercase">{part.name}</h5>
+                                <p className="text-white font-['Oswald'] text-[11px]">₹{part.price.toLocaleString()}</p>
+                              </div>
+                              <div className="flex gap-4 text-[9px] font-label-caps text-zinc-600">
+                                {part.performanceGainHP > 0 && <span className="text-[#27AE60]">+{part.performanceGainHP}HP</span>}
+                                {part.torqueGainNM > 0 && <span className="text-[#FF6B35]">+{part.torqueGainNM}NM</span>}
+                                <span>{part.stage}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      {upgrades.filter(u => 
+                        u.category === activeCategory && 
+                        u.type.toLowerCase() === selection.type.toLowerCase() &&
+                        u.goals.includes(selection.goal)
+                      ).length === 0 && (
+                        <p className="text-zinc-600 text-[10px] text-center py-8 italic uppercase tracking-widest">No compatible components found for your {selection.goal} goal</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Live Budget enforcement */}
+              <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-600 font-label-caps text-[9px] uppercase tracking-widest">Total Investment</span>
+                  <span className={`text-xl font-['Oswald'] font-bold ${performanceStats.budgetRemaining < 0 ? 'text-[#C0392B]' : 'text-white'}`}>
+                    ₹{totalCost.toLocaleString()}
+                  </span>
+                </div>
+                
+                {performanceStats.budgetRemaining < 0 && (
+                  <div className="bg-[#C0392B]/10 border border-[#C0392B]/20 p-3 text-center">
+                    <p className="text-[#C0392B] font-label-caps text-[10px] uppercase tracking-widest">
+                      Budget Exceeded by ₹{Math.abs(performanceStats.budgetRemaining).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <button 
+                    onClick={handleSaveBuild}
+                    disabled={saving || (performanceStats.budgetRemaining < 0 && mode === "manual")}
+                    className="py-3 bg-white text-black font-['Oswald'] font-bold uppercase text-[10px] tracking-widest hover:bg-zinc-200 transition-all disabled:opacity-50"
+                  >
+                    {saving ? 'Saving...' : 'Save Build'}
+                  </button>
+                  <button className="py-3 bg-[#C0392B] text-white font-['Oswald'] font-bold uppercase text-[10px] tracking-widest hover:bg-[#a93226] transition-all">
+                    Get Parts
+                  </button>
+                </div>
+              </div>
             </div>
-             <div className="flex gap-4 px-8 pb-6 sm:pb-0">
-               <button 
-                 onClick={handleSaveBuild}
-                 disabled={saving}
-                 className="px-8 py-3 bg-white text-[#1d100e] font-['Oswald'] font-bold uppercase text-xs tracking-widest hover:bg-white/90 transition-all disabled:opacity-50"
-               >
-                 {saving ? 'Saving...' : 'Save Build'}
-               </button>
-               <button className="px-8 py-3 bg-[#1d100e] text-white font-['Oswald'] font-bold uppercase text-xs tracking-widest hover:bg-black transition-all">Connect to Tuner</button>
-             </div>
           </div>
         </div>
 
         <div className="flex justify-center pt-8">
           <button onClick={() => setStep(1)} className="text-zinc-600 hover:text-white transition-colors font-label-caps text-[10px] uppercase tracking-widest flex items-center gap-2">
             <span className="material-symbols-outlined text-sm">refresh</span>
-            Start New Calculation
+            Start New Configuration
           </button>
         </div>
-      </>
+      </div>
     );
   };
 
@@ -577,21 +876,22 @@ const TuningPage = () => {
   return (
     <div className="min-h-screen bg-[#1d100e] text-[#f7ddd9] font-body-md overflow-x-hidden">
       {/* Navbar (Same as Landing) */}
-      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/80 backdrop-blur-md border-b border-white/5 h-20 flex items-center justify-between px-8 md:px-16">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-          <div className="w-8 h-8 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
-            <span className="material-symbols-outlined text-white -rotate-45 text-lg">speed</span>
+      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/80 backdrop-blur-md border-b border-white/5 h-20 flex items-center justify-center px-8 md:px-16">
+        <div className="max-w-7xl w-full flex items-center justify-between">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+            <div className="w-8 h-8 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
+              <span className="material-symbols-outlined text-white -rotate-45 text-lg">speed</span>
+            </div>
+            <span className="font-['Oswald'] text-2xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
           </div>
-          <span className="font-['Oswald'] text-2xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
-        </div>
-        
-        <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => navigate("/")} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Home</button>
-          <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-xs text-white hover:text-[#C0392B] transition-colors">Recommendation</button>
-          <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-xs text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
-        </div>
+          
+          <div className="hidden md:flex items-center gap-10">
+            <button onClick={() => navigate("/")} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Home</button>
+            <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-white border-b-2 border-[#C0392B] pb-1 transition-colors">Recommendation</button>
+            <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
+          </div>
 
-        {user ? (
+          {user ? (
           <div className="flex items-center gap-4 relative">
             <button
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
@@ -639,6 +939,7 @@ const TuningPage = () => {
             Sign In
           </button>
         )}
+        </div>
       </nav>
 
       <main className="pt-32 pb-24 px-8 md:px-16 max-w-7xl mx-auto min-h-[60vh]">

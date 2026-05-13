@@ -23,8 +23,8 @@ export const register = async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await User.create({ 
-      email: normalized, 
+    const user = await User.create({
+      email: normalized,
       password: hashed,
       username: req.body.username || normalized.split("@")[0]
     });
