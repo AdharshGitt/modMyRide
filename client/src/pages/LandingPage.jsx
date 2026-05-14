@@ -57,8 +57,8 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-[#1d100e] text-[#f7ddd9] font-body-md overflow-x-hidden">
       {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/80 backdrop-blur-md border-b border-white/5 h-20 flex items-center justify-center px-8 md:px-16">
-        <div className="max-w-7xl w-full flex items-center justify-between">
+      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/90 backdrop-blur-lg border-b border-white/5 h-20 flex items-center">
+        <div className="max-w-7xl w-full mx-auto flex items-center justify-between px-8 md:px-16">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className="w-8 h-8 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
               <span className="material-symbols-outlined text-white -rotate-45 text-lg">speed</span>
@@ -125,7 +125,7 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section id="home" className="relative h-screen flex items-center pt-20">
-        <div className="absolute top-0 right-0 w-full md:w-[55%] h-full z-0 overflow-hidden">
+        <div className="absolute top-0 right-0 w-full md:w-[55%] h-full z-0 overflow-hidden translate-x-[5%]">
           <img
             src={heroImage}
             alt="Honda City Type 2 and KTM 390 ADV Performance Engines"
@@ -246,7 +246,7 @@ const LandingPage = () => {
         </div>
         <div className="pt-8 border-t border-white/5 text-center">
           <p className="text-zinc-600 text-[10px] uppercase tracking-widest font-['Oswald']">
-            © 2024 MODMYRIDE. Engineered for the Indian Market.
+            © 2026 MODMYRIDE. Engineered for the Indian Market.
           </p>
         </div>
       </footer>

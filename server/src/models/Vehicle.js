@@ -21,6 +21,11 @@ const vehicleSchema = new mongoose.Schema(
     mileage: { type: String, default: "" },
     torque: { type: String, default: "" },
     torqueNM: { type: Number, default: 0 },
+    displacement: { type: String, default: "" },
+    description: { type: String, default: "" },
+    image: { type: String, default: "" },
+    brandLogo: { type: String, default: "" },
+    category: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -28,7 +28,11 @@ const upgradeSchema = new mongoose.Schema(
     brakingScore: { type: Number, default: 0 },
     compatibleVehicles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Vehicle" }],
     goals: [{ type: String }],
-    stage: { type: String, enum: ["Stage 1", "Stage 2", "Stage 3", "Universal"], default: "Universal" }
+    stage: { type: String, enum: ["Stage 1", "Stage 2", "Stage 3", "Universal"], default: "Universal" },
+    image: { type: String, default: "" },
+    description: { type: String, default: "" },
+    brand: { type: String, default: "" },
+    difficulty: { type: String, enum: ["Easy", "Medium", "Hard", ""], default: "" },
   },
   { timestamps: true }
 );

@@ -97,12 +97,12 @@ const AdminDashboard = () => {
 
   // Vehicle Modal State
   const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
-  const [currentVehicle, setCurrentVehicle] = useState({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "" });
+  const [currentVehicle, setCurrentVehicle] = useState({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "", displacement: "", description: "", image: "", brandLogo: "", category: "" });
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
 
   // Upgrade Modal State
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [currentUpgrade, setCurrentUpgrade] = useState({ name: "", type: "car", category: "Air Intake", price: "", performanceGain: "", mileage: "", torque: "", compatibleVehicles: [], goals: [], stage: "Universal" });
+  const [currentUpgrade, setCurrentUpgrade] = useState({ name: "", type: "car", category: "Air Intake", price: "", performanceGain: "", mileage: "", torque: "", compatibleVehicles: [], goals: [], stage: "Universal", image: "", description: "", brand: "", difficulty: "" });
   const [isEditingUpgrade, setIsEditingUpgrade] = useState(false);
   const [expandedModels, setExpandedModels] = useState([]);
   const [userSearch, setUserSearch] = useState("");
@@ -215,7 +215,7 @@ const AdminDashboard = () => {
       setCurrentVehicle(vehicle);
       setIsEditingVehicle(true);
     } else {
-      setCurrentVehicle({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "" });
+      setCurrentVehicle({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "", displacement: "", description: "", image: "", brandLogo: "", category: "" });
       setIsEditingVehicle(false);
     }
     setIsVehicleModalOpen(true);
@@ -264,7 +264,7 @@ const AdminDashboard = () => {
       });
       setIsEditingUpgrade(true);
     } else {
-      setCurrentUpgrade({ name: "", type: "car", category: "Air Intake", price: "", performanceGain: "", mileage: "", torque: "", compatibleVehicles: [], compatibleFuels: [], compatibleTransmissions: [], goals: [], stage: "Universal" });
+      setCurrentUpgrade({ name: "", type: "car", category: "Air Intake", price: "", performanceGain: "", mileage: "", torque: "", compatibleVehicles: [], compatibleFuels: [], compatibleTransmissions: [], goals: [], stage: "Universal", image: "", description: "", brand: "", difficulty: "" });
       setIsEditingUpgrade(false);
     }
     setIsUpgradeModalOpen(true);
@@ -943,6 +943,7 @@ const AdminDashboard = () => {
                     <table className="w-full text-left font-body-sm">
                       <thead className="bg-[#111111] border-b border-white/5">
                         <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Preview</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
@@ -955,6 +956,17 @@ const AdminDashboard = () => {
                       <tbody className="divide-y divide-white/5">
                         {filteredGroupedVehicles.filter(v => v.type === 'car').slice((carPage - 1) * 10, carPage * 10).map((group) => (
                           <tr key={group._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="w-12 h-8 bg-zinc-900 border border-white/5 overflow-hidden">
+                                {group.variants[0].image ? (
+                                  <img src={group.variants[0].image} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-zinc-700 text-xs">image</span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-6 py-4 text-white font-medium">{group.make}</td>
                             <td className="px-6 py-4 text-zinc-400">{group.model}</td>
                             <td className="px-6 py-4 text-white">{group.year}</td>
@@ -1035,6 +1047,7 @@ const AdminDashboard = () => {
                     <table className="w-full text-left font-body-sm">
                       <thead className="bg-[#111111] border-b border-white/5">
                         <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Preview</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Make</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Model</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Year</th>
@@ -1047,6 +1060,17 @@ const AdminDashboard = () => {
                       <tbody className="divide-y divide-white/5">
                         {filteredGroupedVehicles.filter(v => v.type === 'bike').slice((bikePage - 1) * 10, bikePage * 10).map((group) => (
                           <tr key={group._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="w-12 h-8 bg-zinc-900 border border-white/5 overflow-hidden">
+                                {group.variants[0].image ? (
+                                  <img src={group.variants[0].image} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-zinc-700 text-xs">motorcycle</span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-6 py-4 text-white font-medium">{group.make}</td>
                             <td className="px-6 py-4 text-zinc-400">{group.model}</td>
                             <td className="px-6 py-4 text-white">{group.year}</td>
@@ -1171,6 +1195,7 @@ const AdminDashboard = () => {
                     <table className="w-full text-left font-body-sm">
                       <thead className="bg-[#111111] border-b border-white/5">
                         <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Part</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price</th>
@@ -1184,6 +1209,17 @@ const AdminDashboard = () => {
                       <tbody className="divide-y divide-white/5">
                         {filteredUpgrades.filter(u => u.type === 'car').slice((carUpgradePage - 1) * 10, carUpgradePage * 10).map((upgrade) => (
                           <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="w-10 h-10 bg-zinc-900 border border-white/5 overflow-hidden rounded-sm">
+                                {upgrade.image ? (
+                                  <img src={upgrade.image} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-zinc-700 text-xs">settings</span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
                             <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
                             <td className="px-6 py-4 text-white">INR {upgrade.price}</td>
@@ -1215,6 +1251,7 @@ const AdminDashboard = () => {
                     <table className="w-full text-left font-body-sm">
                       <thead className="bg-[#111111] border-b border-white/5">
                         <tr>
+                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Part</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price</th>
@@ -1228,6 +1265,17 @@ const AdminDashboard = () => {
                       <tbody className="divide-y divide-white/5">
                         {filteredUpgrades.filter(u => u.type === 'bike').slice((bikeUpgradePage - 1) * 10, bikeUpgradePage * 10).map((upgrade) => (
                           <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="w-10 h-10 bg-zinc-900 border border-white/5 overflow-hidden rounded-sm">
+                                {upgrade.image ? (
+                                  <img src={upgrade.image} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-zinc-700 text-xs">settings</span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
                             <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
                             <td className="px-6 py-4 text-white">INR {upgrade.price}</td>
@@ -1437,6 +1485,55 @@ const AdminDashboard = () => {
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                 </div>
+                <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Displacement</label>
+                  <input
+                    type="text"
+                    value={currentVehicle.displacement}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, displacement: e.target.value })}
+                    placeholder="e.g: 1.5L or 390cc"
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</label>
+                  <input
+                    type="text"
+                    value={currentVehicle.category}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, category: e.target.value })}
+                    placeholder="e.g: SUV or Street"
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Vehicle Image URL</label>
+                  <input
+                    type="text"
+                    value={currentVehicle.image}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, image: e.target.value })}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Brand Logo URL</label>
+                  <input
+                    type="text"
+                    value={currentVehicle.brandLogo}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, brandLogo: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Description</label>
+                  <textarea
+                    value={currentVehicle.description}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, description: e.target.value })}
+                    placeholder="Brief overview of the vehicle..."
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[100px]"
+                  />
+                </div>
               </div>
               <div className="flex justify-end gap-4 pt-4 border-t border-white/5">
                 <button type="button" className="px-6 py-2 border border-white/10 text-white font-label-caps tracking-widest hover:bg-white/5 transition-colors uppercase text-sm" onClick={handleCloseVehicleModal}>Cancel</button>
@@ -1568,6 +1665,49 @@ const AdminDashboard = () => {
                     </div>
                   </>
                 )}
+
+                <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Brand</label>
+                  <input
+                    type="text"
+                    value={currentUpgrade.brand}
+                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, brand: e.target.value })}
+                    placeholder="e.g: Akrapovic"
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Installation Difficulty</label>
+                  <select
+                    value={currentUpgrade.difficulty}
+                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, difficulty: e.target.value })}
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  >
+                    <option value="">Select Difficulty</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Part Image URL</label>
+                  <input
+                    type="text"
+                    value={currentUpgrade.image}
+                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, image: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Part Description</label>
+                  <textarea
+                    value={currentUpgrade.description}
+                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, description: e.target.value })}
+                    placeholder="Describe the part and its benefits..."
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[80px]"
+                  />
+                </div>
 
                 <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Goals</label>

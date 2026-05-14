@@ -8,6 +8,7 @@ const SavedProfilesPage = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState([]);
+  const [activeTab, setActiveTab] = useState("car");
 
   useEffect(() => {
     localStorage.setItem("modmyride_theme", "dark");
@@ -64,6 +65,10 @@ const SavedProfilesPage = () => {
     navigate("/");
   };
 
+  const filteredProfiles = profiles.filter(p => (p.vehicle?.type || 'car') === activeTab);
+  const carCount = profiles.filter(p => (p.vehicle?.type || 'car') === 'car').length;
+  const bikeCount = profiles.filter(p => p.vehicle?.type === 'bike').length;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1d100e] flex items-center justify-center">
@@ -75,8 +80,8 @@ const SavedProfilesPage = () => {
   return (
     <div className="min-h-screen bg-[#1d100e] text-[#f7ddd9] font-body-md overflow-x-hidden">
       {/* Navbar (Same as Landing) */}
-      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/80 backdrop-blur-md border-b border-white/5 h-20 flex items-center justify-center px-8 md:px-16">
-        <div className="max-w-7xl w-full flex items-center justify-between">
+      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/90 backdrop-blur-lg border-b border-white/5 h-20 flex items-center">
+        <div className="max-w-7xl w-full mx-auto flex items-center justify-between px-8 md:px-16">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
             <div className="w-8 h-8 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
               <span className="material-symbols-outlined text-white -rotate-45 text-lg">speed</span>
@@ -141,8 +146,8 @@ const SavedProfilesPage = () => {
         </div>
       </nav>
 
-      <main className="pt-32 pb-24 px-8 md:px-16 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+      <main className="pt-28 pb-24 max-w-7xl mx-auto px-8 md:px-16 min-h-[60vh]">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
           <div>
             <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-[0.2em] text-sm mb-4 tracking-widest">User Profile</h2>
             <h1 className="text-5xl md:text-6xl font-['Oswald'] font-black uppercase text-white tracking-tighter">Saved Profiles</h1>
@@ -152,9 +157,27 @@ const SavedProfilesPage = () => {
           </p>
         </div>
 
-        {profiles.length > 0 ? (
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-8 border-b border-white/5 mb-12">
+          <button 
+            onClick={() => setActiveTab('car')}
+            className={`pb-4 font-['Oswald'] uppercase tracking-[0.2em] text-xs transition-all relative ${activeTab === 'car' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+          >
+            Cars ({carCount})
+            {activeTab === 'car' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#C0392B]"></div>}
+          </button>
+          <button 
+            onClick={() => setActiveTab('bike')}
+            className={`pb-4 font-['Oswald'] uppercase tracking-[0.2em] text-xs transition-all relative ${activeTab === 'bike' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+          >
+            Bikes ({bikeCount})
+            {activeTab === 'bike' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#C0392B]"></div>}
+          </button>
+        </div>
+
+        {filteredProfiles.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {profiles.map((profile) => (
+            {filteredProfiles.map((profile) => (
               <div key={profile._id} className="group bg-[#1A1A1A] border border-white/5 machined-edge overflow-hidden transition-all hover:border-[#C0392B]/50 hover:-translate-y-2">
                 <div className="relative aspect-video overflow-hidden">
                   <img 
@@ -203,12 +226,13 @@ const SavedProfilesPage = () => {
           </div>
         ) : (
           <div className="text-center py-32 bg-[#1A1A1A] border border-white/5 machined-edge">
-             <span className="material-symbols-outlined text-6xl text-zinc-800 mb-6">inventory_2</span>
-             <h3 className="font-['Oswald'] text-2xl text-white uppercase mb-2">No Saved Profiles Yet</h3>
-             <p className="text-zinc-600 mb-8">Start your first build to see it here.</p>
+             <span className="material-symbols-outlined text-6xl text-zinc-800 mb-6">{activeTab === 'car' ? 'directions_car' : 'motorcycle'}</span>
+             <h3 className="font-['Oswald'] text-2xl text-white uppercase mb-2">No Saved {activeTab}s Yet</h3>
+             <p className="text-zinc-600 mb-8">Start your first {activeTab} build to see it here.</p>
              <button onClick={() => navigate("/tuning")} className="bg-[#C0392B] text-white px-8 py-3 font-['Oswald'] uppercase tracking-widest text-sm">Start Tuning</button>
           </div>
         )}
+
       </main>
 
       {/* Footer */}
@@ -221,7 +245,7 @@ const SavedProfilesPage = () => {
             <span className="font-['Oswald'] text-xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
           </div>
           <p className="text-zinc-600 text-[10px] uppercase tracking-widest font-['Oswald']">
-            © 2024 MODMYRIDE. Engineered for the Indian Market.
+            © 2026 MODMYRIDE. Engineered for the Indian Market.
           </p>
         </div>
       </footer>

@@ -1,6 +1,23 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchCurrentUser, fetchVehicles, fetchUpgrades, saveUserProfile, fetchUserProfileById, setAuthToken } from "../services/api.js";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
+} from 'recharts';
+
+const formatIndianCurrency = (num) => {
+  if (!num) return "0";
+  return new Intl.NumberFormat('en-IN').format(num);
+};
 
 // Helper to extract numeric values from strings (e.g., "15 HP" -> 15)
 const getNumericGain = (val, stringVal) => {
@@ -28,8 +45,8 @@ const TuningPage = () => {
     year: "",
     fuelType: "",
     transmission: "",
-    goal: "Performance",
-    budget: 50000,
+    goal: "",
+    budget: 0,
     driverName: ""
   });
   const [mode, setMode] = useState("auto"); // "auto" or "manual"
@@ -336,21 +353,39 @@ const TuningPage = () => {
     }
   };
 
+  const isStepValid = (n) => {
+    if (n === 1) return !!(selection.brand && selection.model && selection.year && (selection.type === 'bike' || (selection.fuelType && selection.transmission)));
+    if (n === 2) return !!selection.goal;
+    if (n === 3) return selection.budget >= 10000;
+    return true;
+  };
+
   const renderStepper = () => (
-    <div className="flex items-center justify-center gap-12 mb-20 relative">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md h-px bg-zinc-800 -z-10"></div>
-      {steps.map((s) => (
-        <div 
-          key={s.num} 
-          onClick={() => setStep(s.num)}
-          className="flex flex-col items-center gap-3 cursor-pointer group"
-        >
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-['Oswald'] text-sm font-bold border-2 transition-all ${step === s.num ? 'bg-[#C0392B] border-[#C0392B] text-white' : step > s.num ? 'bg-zinc-800 border-zinc-800 text-zinc-500 group-hover:border-[#C0392B]/50' : 'bg-[#1d100e] border-zinc-800 text-zinc-600 group-hover:border-[#C0392B]/30'}`}>
-            {s.num}
+    <div className="flex items-center justify-center gap-10 mb-20 relative">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg h-[1px] bg-zinc-800/50 -z-10"></div>
+      {steps.map((s) => {
+        const valid = isStepValid(s.num);
+        return (
+          <div 
+            key={s.num} 
+            onClick={() => setStep(s.num)}
+            className="flex flex-col items-center gap-4 cursor-pointer group"
+          >
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-['Oswald'] text-sm font-bold border-2 transition-all duration-300 ${step === s.num ? 'bg-[#C0392B] border-[#C0392B] text-white shadow-[0_0_15px_rgba(192,57,43,0.5)] scale-110' : (s.num < step && valid) ? 'bg-[#1d100e] border-[#C0392B]/50 text-[#C0392B]' : 'bg-[#1d100e] border-zinc-800 text-zinc-600 group-hover:border-zinc-700'}`}>
+              {s.num < step ? (
+                valid ? (
+                  <span className="material-symbols-outlined text-sm font-bold">check</span>
+                ) : (
+                  <span className="material-symbols-outlined text-sm font-bold">close</span>
+                )
+              ) : (
+                s.num
+              )}
+            </div>
+            <span className={`font-['Oswald'] text-[10px] uppercase tracking-[0.2em] transition-colors duration-300 ${step === s.num ? 'text-white' : valid ? 'text-zinc-400' : 'text-zinc-600 group-hover:text-zinc-400'}`}>{s.label}</span>
           </div>
-          <span className={`font-['Oswald'] text-[10px] uppercase tracking-widest transition-colors ${step === s.num ? 'text-[#C0392B]' : 'text-zinc-600 group-hover:text-zinc-400'}`}>{s.label}</span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
@@ -369,7 +404,7 @@ const TuningPage = () => {
           <button
             key={item.id}
             onClick={() => setSelection({...selection, type: item.id, brand: "", model: "", year: ""})}
-            className={`relative p-10 machined-edge flex flex-col items-start gap-4 transition-all group ${selection.type === item.id ? 'bg-[#C0392B]/10 border-[#C0392B]/50' : 'bg-[#111111] hover:bg-[#1A1A1A] border-white/5'}`}
+            className={`relative p-10 machined-edge flex flex-col items-start gap-4 transition-all duration-300 group ${selection.type === item.id ? 'bg-[#C0392B]/10 border-[#C0392B]/50 shadow-[inset_0_0_40px_rgba(192,57,43,0.1)]' : 'bg-[#111111] hover:bg-[#1A1A1A] border-white/5'}`}
           >
             {selection.type === item.id && (
               <div className="absolute top-0 right-0 p-2">
@@ -488,17 +523,11 @@ const TuningPage = () => {
       </div>
 
       <button
-        onClick={() => {
-          if (selection.type === 'bike') {
-            setStep(4);
-          } else {
-            handleNext();
-          }
-        }}
+        onClick={handleNext}
         disabled={!selection.brand || !selection.model || !selection.year || (selection.type === 'car' && (!selection.fuelType || !selection.transmission))}
         className={`w-full py-4 font-['Oswald'] font-bold uppercase tracking-[0.2em] text-sm transition-all machined-edge ${(!selection.brand || !selection.model || !selection.year || (selection.type === 'car' && (!selection.fuelType || !selection.transmission))) ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-[#C0392B] text-white hover:bg-[#a93226] hover:shadow-[0_0_30px_rgba(192,57,43,0.3)]'}`}
       >
-        {selection.type === 'bike' ? 'Generate Build' : 'Continue to Goal'}
+        Continue to Goal
       </button>
     </div>
   );
@@ -536,7 +565,13 @@ const TuningPage = () => {
 
       <div className="flex gap-4">
         <button onClick={handleBack} className="flex-1 py-4 border border-white/10 text-white font-['Oswald'] uppercase tracking-widest text-sm hover:bg-white/5 transition-all">Back</button>
-        <button onClick={handleNext} className="flex-[2] py-4 bg-[#C0392B] text-white font-['Oswald'] uppercase tracking-widest text-sm hover:bg-[#a93226] transition-all">Continue to Budget</button>
+        <button 
+          onClick={handleNext} 
+          disabled={!selection.goal}
+          className={`flex-[2] py-4 font-['Oswald'] uppercase tracking-widest text-sm transition-all ${!selection.goal ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-[#C0392B] text-white hover:bg-[#a93226]'}`}
+        >
+          Continue to Budget
+        </button>
       </div>
     </div>
   );
@@ -554,7 +589,22 @@ const TuningPage = () => {
             <div className="flex justify-between items-end">
               <div>
                 <label className="font-label-caps text-zinc-600 uppercase tracking-widest text-[9px] block mb-2">Max Investment Range</label>
-                <h3 className="text-3xl font-['Oswald'] font-black text-white">₹{selection.budget.toLocaleString()}</h3>
+                <div className="flex items-center gap-2 group/input">
+                  <span className="text-3xl font-['Oswald'] font-black text-[#C0392B]">₹</span>
+                  <input 
+                    type="text"
+                    value={formatIndianCurrency(selection.budget)}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value.replace(/,/g, '')) || 0;
+                      setSelection({...selection, budget: val});
+                    }}
+                    placeholder="Enter Amount"
+                    className="bg-transparent border-b border-transparent focus:border-[#C0392B] outline-none text-3xl font-['Oswald'] font-black text-white w-full max-w-[300px] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
+                {selection.budget > 0 && selection.budget < 10000 && (
+                  <p className="text-[9px] text-[#C0392B] uppercase font-bold mt-1">Min. ₹10,000 required</p>
+                )}
               </div>
               <div className="text-right">
                 <span className="text-[9px] font-label-caps text-zinc-700 uppercase">Tuning Limit</span>
@@ -564,18 +614,17 @@ const TuningPage = () => {
             <div className="relative pt-4">
               <input 
                 type="range" 
-                min="15000" 
-                max="200000" 
-                step="5000"
-                value={selection.budget}
+                min="10000" 
+                max="500000" 
+                step="1000"
+                value={selection.budget > 500000 ? 500000 : selection.budget < 10000 ? 10000 : selection.budget}
                 onChange={(e) => setSelection({...selection, budget: parseInt(e.target.value)})}
                 className="w-full h-1.5 bg-zinc-900 rounded-none appearance-none cursor-pointer accent-[#C0392B]"
               />
               <div className="flex justify-between mt-4 text-[9px] font-label-caps text-zinc-700 tracking-[0.2em]">
-                <span>₹15,000</span>
-                <span>STREET LIMIT</span>
-                <span>PRO LIMIT</span>
-                <span>₹2,00,000</span>
+                <span>₹{formatIndianCurrency(10000)}</span>
+                <span>₹{formatIndianCurrency(250000)}</span>
+                <span>₹{formatIndianCurrency(500000)}</span>
               </div>
             </div>
           </div>
@@ -599,18 +648,39 @@ const TuningPage = () => {
 
       <div className="flex gap-4">
         <button onClick={handleBack} className="flex-1 py-4 border border-white/10 text-white font-['Oswald'] uppercase tracking-widest text-sm hover:bg-white/5 transition-all">Back</button>
-        <button onClick={handleNext} className="flex-[2] py-4 bg-[#C0392B] text-white font-['Oswald'] uppercase tracking-widest text-sm hover:bg-[#a93226] transition-all">Continue to Generate</button>
+        <button 
+          onClick={handleNext} 
+          disabled={!selection.budget || selection.budget < 10000}
+          className={`flex-[2] py-4 font-['Oswald'] uppercase tracking-widest text-sm transition-all ${(!selection.budget || selection.budget < 10000) ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : 'bg-[#C0392B] text-white hover:bg-[#a93226]'}`}
+        >
+          Continue to Generate
+        </button>
       </div>
     </div>
   );
 
   const renderResults = () => {
-    if (!selectedVehicle || !performanceStats) {
+    const missingVehicle = !selectedVehicle;
+    const missingGoal = !selection.goal;
+    const missingBudget = selection.budget < 10000;
+
+    if (missingVehicle || missingGoal || missingBudget) {
       return (
-        <div className="text-center py-20 animate-in fade-in zoom-in duration-700">
-          <h2 className="text-2xl font-['Oswald'] text-white uppercase">Vehicle Data Missing</h2>
-          <p className="text-zinc-500 mt-4 font-body-sm">Please go back and select a valid vehicle configuration.</p>
-          <button onClick={() => setStep(1)} className="mt-8 px-8 py-3 bg-[#C0392B] text-white font-['Oswald'] uppercase text-xs tracking-widest hover:bg-[#a93226] transition-all">Go Back</button>
+        <div className="text-center py-24 animate-in fade-in zoom-in duration-700 bg-[#111111] machined-edge max-w-2xl mx-auto">
+          <span className="material-symbols-outlined text-6xl text-[#C0392B] mb-6">tune</span>
+          <h2 className="text-2xl font-['Oswald'] text-white uppercase tracking-wider">Configuration Incomplete</h2>
+          <p className="text-zinc-500 mt-4 font-body-md max-w-sm mx-auto leading-relaxed">
+            Please define your {missingVehicle && <strong>Vehicle Details</strong>}
+            {missingVehicle && (missingGoal || missingBudget) && " , "}
+            {missingGoal && <strong>Build Goal</strong>}
+            {missingGoal && missingBudget && " and "}
+            {missingBudget && <strong>Budget Range</strong>} to generate your custom performance roadmap.
+          </p>
+          <div className="flex justify-center gap-4 mt-10">
+            {missingVehicle && <button onClick={() => setStep(1)} className="px-8 py-3 border border-white/10 text-white font-['Oswald'] uppercase text-xs tracking-widest hover:bg-white/5 transition-all">Select Vehicle</button>}
+            {missingGoal && <button onClick={() => setStep(2)} className="px-8 py-3 border border-white/10 text-white font-['Oswald'] uppercase text-xs tracking-widest hover:bg-white/5 transition-all">Set Goal</button>}
+            {missingBudget && <button onClick={() => setStep(3)} className="px-8 py-3 bg-[#C0392B] text-white font-['Oswald'] uppercase text-xs tracking-widest hover:bg-[#a93226] transition-all">Set Budget</button>}
+          </div>
         </div>
       );
     }
@@ -632,16 +702,16 @@ const TuningPage = () => {
             </div>
           </div>
 
-          <div className="flex bg-[#1A1A1A] p-1 machined-edge">
+          <div className="flex bg-[#111111] p-1.5 machined-edge rounded-none border border-white/5">
             <button 
               onClick={() => setMode("auto")}
-              className={`px-6 py-3 font-['Oswald'] text-xs font-bold uppercase tracking-widest transition-all ${mode === "auto" ? 'bg-[#C0392B] text-white' : 'text-zinc-500 hover:text-white'}`}
+              className={`px-8 py-3 font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mode === "auto" ? 'bg-[#C0392B] text-white shadow-[0_0_20px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               Smart Auto
             </button>
             <button 
               onClick={() => setMode("manual")}
-              className={`px-6 py-3 font-['Oswald'] text-xs font-bold uppercase tracking-widest transition-all ${mode === "manual" ? 'bg-[#C0392B] text-white' : 'text-zinc-500 hover:text-white'}`}
+              className={`px-8 py-3 font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mode === "manual" ? 'bg-[#C0392B] text-white shadow-[0_0_20px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               Manual Custom
             </button>
@@ -876,8 +946,8 @@ const TuningPage = () => {
   return (
     <div className="min-h-screen bg-[#1d100e] text-[#f7ddd9] font-body-md overflow-x-hidden">
       {/* Navbar (Same as Landing) */}
-      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/80 backdrop-blur-md border-b border-white/5 h-20 flex items-center justify-center px-8 md:px-16">
-        <div className="max-w-7xl w-full flex items-center justify-between">
+      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/90 backdrop-blur-lg border-b border-white/5 h-20 flex items-center">
+        <div className="max-w-7xl w-full mx-auto flex items-center justify-between px-8 md:px-16">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
             <div className="w-8 h-8 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
               <span className="material-symbols-outlined text-white -rotate-45 text-lg">speed</span>
@@ -942,7 +1012,7 @@ const TuningPage = () => {
         </div>
       </nav>
 
-      <main className="pt-32 pb-24 px-8 md:px-16 max-w-7xl mx-auto min-h-[60vh]">
+      <main className="pt-28 pb-24 max-w-7xl mx-auto px-8 md:px-16 min-h-[60vh]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 animate-pulse">
             <div className="w-12 h-12 border-2 border-[#C0392B] border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -951,7 +1021,9 @@ const TuningPage = () => {
         ) : (
           <>
             <div className="text-center mb-16">
-               <h1 className="text-5xl md:text-6xl font-['Oswald'] font-black uppercase text-white tracking-tighter mb-12">Performance Recommendation</h1>
+               <h1 className="text-4xl md:text-6xl font-['Oswald'] font-black uppercase tracking-tighter mb-10 text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-zinc-500">
+                 Performance Recommendation
+               </h1>
                {renderStepper()}
             </div>
 
@@ -992,7 +1064,7 @@ const TuningPage = () => {
         </div>
         <div className="pt-8 border-t border-white/5 text-center">
           <p className="text-zinc-600 text-[10px] uppercase tracking-widest font-['Oswald']">
-            © 2024 MODMYRIDE. Engineered for the Indian Market.
+            © 2026 MODMYRIDE. Engineered for the Indian Market.
           </p>
         </div>
       </footer>
