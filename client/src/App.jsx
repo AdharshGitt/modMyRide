@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import TuningPage from "./pages/TuningPage.jsx";
+import AIAdvisor from "./pages/AIAdvisorPage.jsx";
 import SavedProfilesPage from "./pages/SavedProfilesPage.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 
@@ -12,6 +13,7 @@ const App = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/tuning" element={<TuningPage />} />
+        <Route path="/ai-advisor" element={<AIAdvisor />} />
         <Route path="/profiles" element={<SavedProfilesPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { fetchCurrentUser, fetchVehicles, fetchUpgrades, saveUserProfile, fetchUserProfileById, setAuthToken } from "../services/api.js";
 import {
   ResponsiveContainer,
@@ -30,7 +30,9 @@ const getNumericGain = (val, stringVal) => {
 const TuningPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const profileId = searchParams.get("profileId");
+  const aiResult = location.state?.aiResult;
   const [user, setUser] = useState(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [vehicles, setVehicles] = useState([]);
@@ -104,16 +106,20 @@ const TuningPage = () => {
     fetchData();
   }, [navigate, profileId]);
 
+  useEffect(() => {
+    if (aiResult) {
+      setStep(4);
+      setMode("ai");
+    }
+  }, [aiResult]);
+
 
 
   const handleStartTuning = () => {
     if (user) {
-      if (user.role === 'admin') {
-        navigate("/admin");
-      } else {
-        setStep(1); // Reset to step 1 if already on tuning page
-        navigate("/tuning");
-      }
+      setStep(1);
+      setMode("auto");
+      navigate("/tuning");
     } else {
       navigate("/auth");
     }
@@ -162,7 +168,21 @@ const TuningPage = () => {
     return [...new Set(trans)].filter(Boolean).sort();
   }, [filteredVehicles, selection.brand, selection.model, selection.year, selection.fuelType]);
 
+  const aiVehicle = useMemo(() => {
+    if (!aiResult || !aiResult.vehicle) return null;
+    return vehicles.find(v => v._id === aiResult.vehicle.id);
+  }, [aiResult, vehicles]);
+
+  const aiUpgrades = useMemo(() => {
+    if (!aiResult || !aiResult.recommendedUpgrades) return [];
+    return aiResult.recommendedUpgrades.map(rec => {
+      const upgrade = upgrades.find(u => u._id === rec.upgradeId);
+      return upgrade ? { ...upgrade, aiReasoning: rec.reasoning } : null;
+    }).filter(Boolean);
+  }, [aiResult, upgrades]);
+
   const selectedVehicle = useMemo(() => {
+    if (mode === "ai") return aiVehicle;
     return filteredVehicles.find(v => 
       v.make === selection.brand && 
       v.model === selection.model && 
@@ -170,7 +190,7 @@ const TuningPage = () => {
       v.fuelType === selection.fuelType &&
       v.transmission === selection.transmission
     );
-  }, [filteredVehicles, selection.brand, selection.model, selection.year, selection.fuelType, selection.transmission]);
+  }, [filteredVehicles, selection.brand, selection.model, selection.year, selection.fuelType, selection.transmission, mode, aiVehicle]);
 
   useEffect(() => {
     if (selection.type === 'bike' && selection.year) {
@@ -275,8 +295,9 @@ const TuningPage = () => {
   }, [manualCategories, activeCategory]);
 
   const activeBuild = useMemo(() => {
+    if (mode === "ai") return aiUpgrades;
     return mode === "auto" ? autoBuild : manualSelection;
-  }, [mode, autoBuild, manualSelection]);
+  }, [mode, autoBuild, manualSelection, aiUpgrades]);
 
   const performanceStats = useMemo(() => {
     if (!selectedVehicle) return null;
@@ -288,13 +309,13 @@ const TuningPage = () => {
     const totalTorqueGain = activeBuild.reduce((sum, u) => sum + getNumericGain(u.torqueGainNM, u.torque), 0);
     const totalMileageImpact = activeBuild.reduce((sum, u) => sum + (u.mileageImpact || 0), 0);
     
-    const tunedHP = stockHP + totalHPGain;
-    const tunedTorque = stockTorque + totalTorqueGain;
+    const tunedHP = mode === "ai" && aiResult?.performanceStats ? aiResult.performanceStats.estimatedHP : stockHP + totalHPGain;
+    const tunedTorque = mode === "ai" && aiResult?.performanceStats ? aiResult.performanceStats.estimatedTorque : stockTorque + totalTorqueGain;
     
     const budgetUsed = activeBuild.reduce((sum, u) => sum + u.price, 0);
-    const budgetRemaining = selection.budget - budgetUsed;
+    const budgetRemaining = (aiResult?.selection?.budget || selection.budget) - budgetUsed;
     
-    const buildScore = Math.min(100, Math.round(
+    const buildScore = mode === "ai" && aiResult?.performanceStats ? aiResult.performanceStats.buildScore : Math.min(100, Math.round(
       (totalHPGain / (stockHP * 0.4) * 40) + 
       (totalTorqueGain / (stockTorque * 0.4) * 30) + 
       (activeBuild.length / 7 * 30)
@@ -305,15 +326,17 @@ const TuningPage = () => {
       tunedHP,
       stockTorque,
       tunedTorque,
-      totalHPGain,
-      totalTorqueGain,
+      totalHPGain: tunedHP - stockHP,
+      totalTorqueGain: tunedTorque - stockTorque,
       totalMileageImpact,
       budgetUsed,
       budgetRemaining,
       buildScore,
-      hpIncreasePercent: Math.round((totalHPGain / stockHP) * 100) || 0
+      hpIncreasePercent: Math.round(((tunedHP - stockHP) / stockHP) * 100) || 0,
+      reliabilityScore: mode === "ai" ? (aiResult?.performanceStats?.reliabilityScore || 85) : 85,
+      dailyUsability: mode === "ai" ? (aiResult?.performanceStats?.dailyUsability || 90) : 90
     };
-  }, [selectedVehicle, activeBuild, selection.budget]);
+  }, [selectedVehicle, activeBuild, selection.budget, mode, aiResult]);
 
   const totalCost = performanceStats?.budgetUsed || 0;
 
@@ -715,13 +738,21 @@ const TuningPage = () => {
             >
               Manual Custom
             </button>
+            {aiResult && (
+              <button 
+                onClick={() => setMode("ai")}
+                className={`px-8 py-3 font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mode === "ai" ? 'bg-[#C0392B] text-white shadow-[0_0_20px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                AI Advisor
+              </button>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Performance Metrics */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div className="bg-[#111111] machined-edge p-6 flex flex-col justify-between h-40">
                 <p className="text-zinc-600 font-label-caps text-[9px] uppercase tracking-widest">Build Score</p>
                 <div className="flex items-baseline gap-2">
@@ -736,28 +767,44 @@ const TuningPage = () => {
               <div className="bg-[#111111] machined-edge p-6 flex flex-col justify-between h-40">
                 <p className="text-zinc-600 font-label-caps text-[9px] uppercase tracking-widest">Power Gain</p>
                 <div className="flex flex-col">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-['Oswald'] font-bold text-white">{performanceStats.tunedHP}</span>
-                    <span className="text-zinc-700 font-['Oswald'] text-sm">HP</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-['Oswald'] font-bold text-[#27AE60]">+{performanceStats.hpIncreasePercent}</span>
+                    <span className="text-[#27AE60] font-['Oswald'] text-xl">%</span>
                   </div>
-                  <span className="text-[#27AE60] text-[10px] font-bold mt-1">+{performanceStats.hpIncreasePercent}% VS STOCK</span>
-                </div>
-                <div className="flex justify-between text-[8px] font-label-caps text-zinc-700">
-                  <span>STOCK: {performanceStats.stockHP}HP</span>
+                  <span className="text-zinc-500 text-[10px] font-bold mt-1 uppercase">Vs Stock Performance</span>
                 </div>
               </div>
 
               <div className="bg-[#111111] machined-edge p-6 flex flex-col justify-between h-40">
                 <p className="text-zinc-600 font-label-caps text-[9px] uppercase tracking-widest">Torque Gain</p>
                 <div className="flex flex-col">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-['Oswald'] font-bold text-white">{performanceStats.tunedTorque}</span>
-                    <span className="text-zinc-700 font-['Oswald'] text-sm">NM</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-['Oswald'] font-bold text-[#27AE60]">+{Math.round(((performanceStats.tunedTorque - performanceStats.stockTorque) / performanceStats.stockTorque) * 100)}</span>
+                    <span className="text-[#27AE60] font-['Oswald'] text-xl">%</span>
                   </div>
-                  <span className="text-[#27AE60] text-[10px] font-bold mt-1">+{performanceStats.tunedTorque - performanceStats.stockTorque}NM GAIN</span>
+                  <span className="text-zinc-500 text-[10px] font-bold mt-1 uppercase">Vs Stock Output</span>
                 </div>
-                <div className="flex justify-between text-[8px] font-label-caps text-zinc-700">
-                  <span>STOCK: {performanceStats.stockTorque}NM</span>
+              </div>
+
+              <div className="bg-[#111111] machined-edge p-6 flex flex-col justify-between h-40">
+                <p className="text-zinc-600 font-label-caps text-[9px] uppercase tracking-widest">Reliability</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-['Oswald'] font-bold text-white">{performanceStats.reliabilityScore}</span>
+                  <span className="text-zinc-700 font-['Oswald'] text-sm">%</span>
+                </div>
+                <div className="h-1 bg-zinc-900 overflow-hidden">
+                  <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${performanceStats.reliabilityScore}%` }}></div>
+                </div>
+              </div>
+
+              <div className="bg-[#111111] machined-edge p-6 flex flex-col justify-between h-40">
+                <p className="text-zinc-600 font-label-caps text-[9px] uppercase tracking-widest">Usability</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-['Oswald'] font-bold text-white">{performanceStats.dailyUsability}</span>
+                  <span className="text-zinc-700 font-['Oswald'] text-sm">%</span>
+                </div>
+                <div className="h-1 bg-zinc-900 overflow-hidden">
+                  <div className="h-full bg-green-500 transition-all duration-1000" style={{ width: `${performanceStats.dailyUsability}%` }}></div>
                 </div>
               </div>
             </div>
@@ -773,13 +820,13 @@ const TuningPage = () => {
               ].map((chart, i) => (
                 <div key={i} className="space-y-4">
                   <div className="flex justify-between items-end">
-                    <span className="text-zinc-600 font-label-caps text-[10px] tracking-widest">{chart.label}</span>
-                    <div className="flex items-center gap-4">
-                       <span className="text-[9px] text-zinc-700 font-label-caps uppercase">Stock: {chart.stock}</span>
-                       <span className="text-xs text-white font-['Oswald']">{chart.tuned}</span>
+                    <span className="text-zinc-400 font-['Oswald'] font-bold text-xs tracking-widest uppercase">{chart.label}</span>
+                    <div className="flex items-center gap-6">
+                       <span className="text-[10px] text-zinc-500 font-label-caps uppercase tracking-widest">Stock: <span className="text-zinc-300">{chart.stock}</span></span>
+                       <span className="text-lg text-white font-['Oswald'] font-black leading-none">{chart.tuned}</span>
                     </div>
                   </div>
-                  <div className="relative h-4 bg-zinc-900/50">
+                  <div className="relative h-6 bg-zinc-900/50">
                     <div 
                       className="absolute top-0 left-0 h-full bg-zinc-800 transition-all duration-1000 ease-out" 
                       style={{ width: `${(chart.stock / chart.max) * 100}%` }}
@@ -793,18 +840,60 @@ const TuningPage = () => {
               ))}
             </div>
 
-            {/* Smart Warnings */}
-            {(performanceStats.hpIncreasePercent > 20 || performanceStats.tunedHP > 200) && (
-              <div className="bg-[#C0392B]/5 border border-[#C0392B]/20 p-6 flex items-start gap-4">
-                <span className="material-symbols-outlined text-[#C0392B]">warning</span>
-                <div>
-                  <h5 className="text-white font-['Oswald'] font-bold text-xs uppercase mb-1">Safety Recommendation</h5>
-                  <p className="text-zinc-500 text-[11px] leading-relaxed">
-                    Significant power increase detected (+{performanceStats.hpIncreasePercent}%). 
-                    We highly recommend upgrading your <strong>Braking System</strong> and <strong>Suspension</strong> to handle the increased load.
-                  </p>
+            {/* AI Build Summary */}
+            {mode === "ai" && aiResult?.summary && (
+              <div className="bg-[#111111] machined-edge p-8 space-y-6">
+                <h4 className="text-white font-['Oswald'] font-bold uppercase text-xs tracking-widest border-b border-white/5 pb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#C0392B] text-sm">auto_awesome</span>
+                  AI Build Summary
+                </h4>
+                <p className="text-zinc-400 text-sm leading-relaxed font-body-md italic">
+                  "{aiResult.summary}"
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+                   <div className="space-y-4">
+                      <h5 className="text-[10px] font-label-caps text-zinc-500 uppercase tracking-widest">Impact Analysis</h5>
+                      <ul className="space-y-2">
+                        {Object.entries(aiResult.impact || {}).map(([key, val]) => (
+                          <li key={key} className="flex items-start gap-2 text-[11px]">
+                            <span className="text-[#C0392B] font-bold uppercase min-w-[80px]">{key}:</span>
+                            <span className="text-zinc-400">{val}</span>
+                          </li>
+                        ))}
+                      </ul>
+                   </div>
+                   <div className="space-y-4">
+                      <h5 className="text-[10px] font-label-caps text-zinc-500 uppercase tracking-widest">Upgrade Priority</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {aiResult.priority?.map((p, i) => (
+                          <span key={i} className="px-2 py-1 bg-zinc-900 border border-white/5 text-zinc-400 text-[9px] uppercase tracking-widest">{i+1}. {p}</span>
+                        ))}
+                      </div>
+                   </div>
                 </div>
               </div>
+            )}
+            
+            {/* AI Stages */}
+            {mode === "ai" && aiResult?.stages && (
+               <div className="bg-[#111111] machined-edge p-8 space-y-6">
+                  <h4 className="text-white font-['Oswald'] font-bold uppercase text-xs tracking-widest border-b border-white/5 pb-4">Tuning Stages Roadmap</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {aiResult.stages.map?.((stage, i) => (
+                      <div key={i} className="p-4 bg-zinc-900/30 border border-white/5">
+                        <h5 className="text-[#C0392B] font-['Oswald'] font-bold text-xs uppercase mb-3">{stage.label}</h5>
+                        <ul className="space-y-1">
+                          {stage.parts?.map?.((p, j) => (
+                            <li key={j} className="text-zinc-500 text-[10px] flex items-center gap-2">
+                              <span className="w-1 h-1 bg-zinc-700 rounded-full"></span>
+                              {p}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+               </div>
             )}
           </div>
 
@@ -813,7 +902,7 @@ const TuningPage = () => {
             <div className="bg-[#111111] machined-edge p-6">
               <div className="flex justify-between items-center mb-6">
                 <h4 className="text-white font-['Oswald'] font-bold uppercase text-xs tracking-widest">
-                  {mode === "auto" ? "Recommended Package" : "Custom Configuration"}
+                  {mode === "ai" ? "AI Recommended Build" : mode === "auto" ? "Recommended Package" : "Custom Configuration"}
                 </h4>
                 <span className="text-[10px] text-zinc-600 font-label-caps">{activeBuild.length} Parts</span>
               </div>
@@ -833,7 +922,7 @@ const TuningPage = () => {
               )}
 
               <div className="space-y-3 min-h-[300px]">
-                {mode === "auto" ? (
+                {mode === "auto" || mode === "ai" ? (
                   activeBuild.map((part, i) => (
                     <div key={i} className="group p-4 bg-zinc-900/50 border border-white/5 hover:border-[#C0392B]/30 transition-all">
                       <div className="flex justify-between items-start mb-1">
@@ -843,7 +932,9 @@ const TuningPage = () => {
                         </div>
                         <p className="text-white font-['Oswald'] text-[11px]">₹{part.price.toLocaleString()}</p>
                       </div>
-                      <p className="text-zinc-600 text-[9px] font-body-sm mt-1">{part.reason}</p>
+                      <p className="text-zinc-600 text-[9px] font-body-sm mt-1 leading-relaxed">
+                        {mode === "ai" ? part.aiReasoning : part.reason}
+                      </p>
                     </div>
                   ))
                 ) : (
@@ -957,7 +1048,8 @@ const TuningPage = () => {
           
           <div className="hidden md:flex items-center gap-10">
             <button onClick={() => navigate("/")} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Home</button>
-            <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-white border-b-2 border-[#C0392B] pb-1 transition-colors">Recommendation</button>
+            <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Recommendation</button>
+            <button onClick={() => navigate("/ai-advisor")} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">AI Advisor</button>
             <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
           </div>
 

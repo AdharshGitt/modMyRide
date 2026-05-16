@@ -148,4 +148,13 @@ export const deleteUserProfile = async (id) => {
   return data;
 };
 
+// =======================
+// AI Advisor API Functions
+// =======================
+
+export const fetchAIRecommendation = async (aiData) => {
+  const { data } = await api.post("/ai/recommend", aiData);
+  return data;
+};
+
 export default api;

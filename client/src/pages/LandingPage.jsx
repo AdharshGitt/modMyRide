@@ -36,13 +36,11 @@ const LandingPage = () => {
   }, []);
 
   const handleStartTuning = () => {
+    console.log("Navigating to Tuning Page. User state:", user?.username || "Guest");
     if (user) {
-      if (user.role === 'admin') {
-        navigate("/admin");
-      } else {
-        navigate("/tuning");
-      }
+      navigate("/tuning");
     } else {
+      console.log("No user found, redirecting to Auth");
       navigate("/auth");
     }
   };
@@ -67,8 +65,9 @@ const LandingPage = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-10">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-white border-b-2 border-[#C0392B] pb-1 transition-colors">Home</button>
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Home</button>
             <button onClick={handleStartTuning} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Recommendation</button>
+            <button onClick={() => navigate("/ai-advisor")} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">AI Advisor</button>
             <button onClick={() => navigate("/profiles")} className="font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 hover:text-white transition-colors">Saved Profiles</button>
           </div>
 
