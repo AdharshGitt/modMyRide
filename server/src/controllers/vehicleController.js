@@ -33,6 +33,28 @@ export const updateVehicle = async (req, res) => {
     if (!vehicle) {
       return res.status(404).json({ message: "Vehicle not found" });
     }
+
+    // Sync visual properties to all other variants of the same vehicle model
+    if (vehicle.type && vehicle.make && vehicle.model && vehicle.year) {
+      await Vehicle.updateMany(
+        {
+          type: vehicle.type,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          _id: { $ne: vehicle._id }
+        },
+        {
+          $set: {
+            image: vehicle.image || "",
+            brandLogo: vehicle.brandLogo || "",
+            description: vehicle.description || "",
+            category: vehicle.category || ""
+          }
+        }
+      );
+    }
+
     res.json({ vehicle });
   } catch (err) {
     res.status(500).json({ message: "Failed to update vehicle", error: err.message });

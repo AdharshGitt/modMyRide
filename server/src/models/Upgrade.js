@@ -31,8 +31,7 @@ const upgradeSchema = new mongoose.Schema(
     stage: { type: String, enum: ["Stage 1", "Stage 2", "Stage 3", "Universal"], default: "Universal" },
     image: { type: String, default: "" },
     description: { type: String, default: "" },
-    brand: { type: String, default: "" },
-    difficulty: { type: String, enum: ["Easy", "Medium", "Hard", ""], default: "" },
+
   },
   { timestamps: true }
 );

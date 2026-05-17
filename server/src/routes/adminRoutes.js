@@ -31,7 +31,15 @@ router.get("/stats", async (req, res) => {
     const bikesCount = await Vehicle.countDocuments({ type: "bike" });
 
     // Parts Activity by Category
-    const categories = ["Engine", "Exhaust", "Suspension", "Brakes", "Wheels", "Aesthetics", "Lights"];
+    const categories = [
+      "Air Intake", 
+      "Exhaust Systems", 
+      "ECU & Tuning", 
+      "Suspension", 
+      "Brakes", 
+      "Wheels & Tyres", 
+      "Lighting"
+    ];
     const partsActivity = await Promise.all(
       categories.map(async (cat) => ({
         category: cat,

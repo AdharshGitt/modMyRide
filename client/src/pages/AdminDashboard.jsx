@@ -97,7 +97,7 @@ const AdminDashboard = () => {
 
   // Vehicle Modal State
   const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
-  const [currentVehicle, setCurrentVehicle] = useState({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "", displacement: "", description: "", image: "", brandLogo: "", category: "" });
+  const [currentVehicle, setCurrentVehicle] = useState({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "", torqueNM: "", displacement: "", description: "", image: "", brandLogo: "", category: "" });
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
 
   // Upgrade Modal State
@@ -215,7 +215,7 @@ const AdminDashboard = () => {
       setCurrentVehicle(vehicle);
       setIsEditingVehicle(true);
     } else {
-      setCurrentVehicle({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "", displacement: "", description: "", image: "", brandLogo: "", category: "" });
+      setCurrentVehicle({ type: "car", make: "", model: "", year: "", engine: "", fuelType: "Petrol", transmission: "Manual", stockPower: "", mileage: "", torque: "", torqueNM: "", displacement: "", description: "", image: "", brandLogo: "", category: "" });
       setIsEditingVehicle(false);
     }
     setIsVehicleModalOpen(true);
@@ -393,12 +393,15 @@ const AdminDashboard = () => {
             <span>Parts Catalog</span>
           </button>
         </nav>
-        {/* <div className="mt-auto border-t border-white/5 pt-4">
-          <button onClick={handleLogout} className="w-full text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight">
-            <span className="material-symbols-outlined" data-icon="logout">logout</span>
-            <span>Logout</span>
+        <div className="mt-auto border-t border-white/5 pt-4">
+          <button 
+            onClick={() => navigate("/")} 
+            className="w-full text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424] flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight"
+          >
+            <span className="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+            <span>Exit Admin Panel</span>
           </button>
-        </div> */}
+        </div>
       </aside>
 
       {/* Main Content Area */}
@@ -962,7 +965,7 @@ const AdminDashboard = () => {
                                   <img src={group.variants[0].image} alt="" className="w-full h-full object-cover" />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-zinc-700 text-xs">image</span>
+                                    <span className="material-symbols-outlined text-zinc-700 text-xs">directions_car</span>
                                   </div>
                                 )}
                               </div>
@@ -985,45 +988,47 @@ const AdminDashboard = () => {
                             <td className="px-6 py-4 text-white font-mono text-xs">
                               {[...new Set(group.variants.map(v => v.stockPower).filter(Boolean))].sort((a,b) => a-b).join(", ") || "0"} HP
                             </td>
-                            <td className="px-6 py-4 flex gap-3">
-                              <div className="group relative">
-                                <button
-                                  onClick={() => handleOpenVehicleModal(group.variants[0])}
-                                  className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase"
-                                >
-                                  {group.variants.length > 1 ? "Edit Variant" : "Edit"}
-                                </button>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3 whitespace-nowrap">
+                                <div className="group relative">
+                                  <button
+                                    onClick={() => handleOpenVehicleModal(group.variants[0])}
+                                    className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase"
+                                  >
+                                    Edit
+                                  </button>
 
-                                <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
-                                  {group.variants.map(v => (
-                                    <button
-                                      key={v._id}
-                                      onClick={() => handleOpenVehicleModal(v)}
-                                      className="w-full text-left px-4 py-2 text-[10px] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors uppercase border-b border-white/5 last:border-0"
-                                    >
-                                      {v.fuelType} {v.transmission} ({v.engine})
-                                    </button>
-                                  ))}
+                                  <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge flex flex-col whitespace-normal">
+                                    {group.variants.map(v => (
+                                      <button
+                                        key={v._id}
+                                        onClick={() => handleOpenVehicleModal(v)}
+                                        className="w-full text-left px-4 py-2 text-[10px] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors uppercase border-b border-white/5 last:border-0"
+                                      >
+                                        {v.fuelType} {v.transmission} ({v.engine})
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="group relative">
-                                <button
-                                  onClick={() => handleDeleteVehicle(group.variants[0]._id)}
-                                  className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase"
-                                >
-                                  {group.variants.length > 1 ? "Delete Variant" : "Delete"}
-                                </button>
+                                <div className="group relative">
+                                  <button
+                                    onClick={() => handleDeleteVehicle(group.variants[0]._id)}
+                                    className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase"
+                                  >
+                                    Delete
+                                  </button>
 
-                                <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
-                                  {group.variants.map(v => (
-                                    <button
-                                      key={v._id}
-                                      onClick={() => handleDeleteVehicle(v._id)}
-                                      className="w-full text-left px-4 py-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors uppercase border-b border-white/5 last:border-0"
-                                    >
-                                      {v.fuelType} {v.transmission}
-                                    </button>
-                                  ))}
+                                  <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge flex flex-col whitespace-normal">
+                                    {group.variants.map(v => (
+                                      <button
+                                        key={v._id}
+                                        onClick={() => handleDeleteVehicle(v._id)}
+                                        className="w-full text-left px-4 py-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors uppercase border-b border-white/5 last:border-0"
+                                      >
+                                        {v.fuelType} {v.transmission}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                             </td>
@@ -1089,45 +1094,47 @@ const AdminDashboard = () => {
                             <td className="px-6 py-4 text-white font-mono text-xs">
                               {[...new Set(group.variants.map(v => v.stockPower).filter(Boolean))].sort((a,b) => a-b).join(", ") || "0"} HP
                             </td>
-                            <td className="px-6 py-4 flex gap-3">
-                              <div className="group relative">
-                                <button
-                                  onClick={() => handleOpenVehicleModal(group.variants[0])}
-                                  className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase"
-                                >
-                                  {group.variants.length > 1 ? "Edit Variant" : "Edit"}
-                                </button>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3 whitespace-nowrap">
+                                <div className="group relative">
+                                  <button
+                                    onClick={() => handleOpenVehicleModal(group.variants[0])}
+                                    className="text-orange-500 hover:underline font-label-caps text-[10px] uppercase"
+                                  >
+                                    Edit
+                                  </button>
 
-                                <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
-                                  {group.variants.map(v => (
-                                    <button
-                                      key={v._id}
-                                      onClick={() => handleOpenVehicleModal(v)}
-                                      className="w-full text-left px-4 py-2 text-[10px] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors uppercase border-b border-white/5 last:border-0"
-                                    >
-                                      {v.engine || 'Standard'}
-                                    </button>
-                                  ))}
+                                  <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge flex flex-col whitespace-normal">
+                                    {group.variants.map(v => (
+                                      <button
+                                        key={v._id}
+                                        onClick={() => handleOpenVehicleModal(v)}
+                                        className="w-full text-left px-4 py-2 text-[10px] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors uppercase border-b border-white/5 last:border-0"
+                                      >
+                                        {v.engine || 'Standard'}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="group relative">
-                                <button
-                                  onClick={() => handleDeleteVehicle(group.variants[0]._id)}
-                                  className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase"
-                                >
-                                  {group.variants.length > 1 ? "Delete Variant" : "Delete"}
-                                </button>
+                                <div className="group relative">
+                                  <button
+                                    onClick={() => handleDeleteVehicle(group.variants[0]._id)}
+                                    className="text-[#C0392B] hover:underline font-label-caps text-[10px] uppercase"
+                                  >
+                                    Delete
+                                  </button>
 
-                                <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge">
-                                  {group.variants.map(v => (
-                                    <button
-                                      key={v._id}
-                                      onClick={() => handleDeleteVehicle(v._id)}
-                                      className="w-full text-left px-4 py-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors uppercase border-b border-white/5 last:border-0"
-                                    >
-                                      {v.engine || 'Standard'}
-                                    </button>
-                                  ))}
+                                  <div className="hidden group-hover:block absolute right-0 top-full bg-[#1A1A1A] border border-white/10 z-50 shadow-2xl min-w-[200px] machined-edge flex flex-col whitespace-normal">
+                                    {group.variants.map(v => (
+                                      <button
+                                        key={v._id}
+                                        onClick={() => handleDeleteVehicle(v._id)}
+                                        className="w-full text-left px-4 py-2 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors uppercase border-b border-white/5 last:border-0"
+                                      >
+                                        {v.engine || 'Standard'}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                             </td>
@@ -1195,7 +1202,6 @@ const AdminDashboard = () => {
                     <table className="w-full text-left font-body-sm">
                       <thead className="bg-[#111111] border-b border-white/5">
                         <tr>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Part</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price</th>
@@ -1209,17 +1215,6 @@ const AdminDashboard = () => {
                       <tbody className="divide-y divide-white/5">
                         {filteredUpgrades.filter(u => u.type === 'car').slice((carUpgradePage - 1) * 10, carUpgradePage * 10).map((upgrade) => (
                           <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="w-10 h-10 bg-zinc-900 border border-white/5 overflow-hidden rounded-sm">
-                                {upgrade.image ? (
-                                  <img src={upgrade.image} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-zinc-700 text-xs">settings</span>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
                             <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
                             <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
                             <td className="px-6 py-4 text-white">INR {upgrade.price}</td>
@@ -1251,7 +1246,6 @@ const AdminDashboard = () => {
                     <table className="w-full text-left font-body-sm">
                       <thead className="bg-[#111111] border-b border-white/5">
                         <tr>
-                          <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Part</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Name</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</th>
                           <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Price</th>
@@ -1265,17 +1259,6 @@ const AdminDashboard = () => {
                       <tbody className="divide-y divide-white/5">
                         {filteredUpgrades.filter(u => u.type === 'bike').slice((bikeUpgradePage - 1) * 10, bikeUpgradePage * 10).map((upgrade) => (
                           <tr key={upgrade._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="w-10 h-10 bg-zinc-900 border border-white/5 overflow-hidden rounded-sm">
-                                {upgrade.image ? (
-                                  <img src={upgrade.image} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-zinc-700 text-xs">settings</span>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
                             <td className="px-6 py-4 text-white font-medium">{upgrade.name}</td>
                             <td className="px-6 py-4 text-zinc-400">{upgrade.category}</td>
                             <td className="px-6 py-4 text-white">INR {upgrade.price}</td>
@@ -1452,20 +1435,40 @@ const AdminDashboard = () => {
 
 
                 {/* Performance Specs Section */}
-                <div className="md:col-span-2 space-y-2">
+                <div className="space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Stock Power (HP/PS)</label>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
                     value={currentVehicle.stockPower}
-                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, stockPower: parseFloat(e.target.value) })}
+                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, stockPower: parseFloat(e.target.value) || "" })}
                     placeholder="e.g: 130.5"
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                   <small className="text-zinc-500 text-xs block">Enter decimal values for precise horsepower (e.g: 130.5)</small>
                 </div>
                 <div className="space-y-2">
+                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Torque (Nm)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={currentVehicle.torqueNM || ""}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setCurrentVehicle({
+                        ...currentVehicle,
+                        torqueNM: val || "",
+                        torque: e.target.value ? `${val} Nm` : ""
+                      });
+                    }}
+                    placeholder="e.g: 200"
+                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                  />
+                  <small className="text-zinc-500 text-xs block">Enter decimal values for precise torque in Nm (e.g: 200)</small>
+                </div>
+                <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Mileage</label>
                   <input
                     type="text"
@@ -1475,36 +1478,7 @@ const AdminDashboard = () => {
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Torque</label>
-                  <input
-                    type="text"
-                    value={currentVehicle.torque}
-                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, torque: e.target.value })}
-                    placeholder="e.g: 200 Nm"
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Displacement</label>
-                  <input
-                    type="text"
-                    value={currentVehicle.displacement}
-                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, displacement: e.target.value })}
-                    placeholder="e.g: 1.5L or 390cc"
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Category</label>
-                  <input
-                    type="text"
-                    value={currentVehicle.category}
-                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, category: e.target.value })}
-                    placeholder="e.g: SUV or Street"
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  />
-                </div>
+
                 <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Vehicle Image URL</label>
                   <input
@@ -1515,25 +1489,7 @@ const AdminDashboard = () => {
                     className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                   />
                 </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Brand Logo URL</label>
-                  <input
-                    type="text"
-                    value={currentVehicle.brandLogo}
-                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, brandLogo: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  />
-                </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Description</label>
-                  <textarea
-                    value={currentVehicle.description}
-                    onChange={(e) => setCurrentVehicle({ ...currentVehicle, description: e.target.value })}
-                    placeholder="Brief overview of the vehicle..."
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[100px]"
-                  />
-                </div>
+
               </div>
               <div className="flex justify-end gap-4 pt-4 border-t border-white/5">
                 <button type="button" className="px-6 py-2 border border-white/10 text-white font-label-caps tracking-widest hover:bg-white/5 transition-colors uppercase text-sm" onClick={handleCloseVehicleModal}>Cancel</button>
@@ -1666,48 +1622,7 @@ const AdminDashboard = () => {
                   </>
                 )}
 
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Brand</label>
-                  <input
-                    type="text"
-                    value={currentUpgrade.brand}
-                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, brand: e.target.value })}
-                    placeholder="e.g: Akrapovic"
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Installation Difficulty</label>
-                  <select
-                    value={currentUpgrade.difficulty}
-                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, difficulty: e.target.value })}
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  >
-                    <option value="">Select Difficulty</option>
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Part Image URL</label>
-                  <input
-                    type="text"
-                    value={currentUpgrade.image}
-                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, image: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
-                  />
-                </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Part Description</label>
-                  <textarea
-                    value={currentUpgrade.description}
-                    onChange={(e) => setCurrentUpgrade({ ...currentUpgrade, description: e.target.value })}
-                    placeholder="Describe the part and its benefits..."
-                    className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm min-h-[80px]"
-                  />
-                </div>
+
 
                 <div className="md:col-span-2 space-y-2">
                   <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Goals</label>

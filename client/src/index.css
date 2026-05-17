@@ -266,6 +266,52 @@ body.light-mode .bg-zinc-800 {
   to { transform: translateX(100%); }
 }
 
+/* Nav glow underline — hover + active */
+
+/* All nav links — underline slides in on hover with static glow */
+.nav-link {
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #C0392B;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.nav-link:hover {
+  color: #ffffff !important;
+}
+
+.nav-link:hover::after {
+  transform: scaleX(1);
+  box-shadow: 0 0 8px 2px rgba(192, 57, 43, 0.8), 0 0 20px 4px rgba(192, 57, 43, 0.4);
+}
+
+/* Active nav link — always shows static glow underline */
+.nav-active {
+  position: relative;
+  color: #ffffff !important;
+}
+
+.nav-active::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #C0392B;
+  box-shadow: 0 0 8px 2px rgba(192, 57, 43, 0.8), 0 0 20px 4px rgba(192, 57, 43, 0.4);
+}
+
 .animate-shine {
   position: relative;
   overflow: hidden;
