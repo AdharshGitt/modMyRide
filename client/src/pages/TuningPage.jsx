@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { fetchCurrentUser, fetchVehicles, fetchUpgrades, saveUserProfile, fetchUserProfileById, setAuthToken } from "../services/api.js";
+import Navbar from "../components/Navbar.jsx";
 import {
   ResponsiveContainer,
   LineChart,
@@ -32,7 +33,7 @@ const TuningPage = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const profileId = searchParams.get("profileId");
-  const aiResult = location.state?.aiResult;
+  const [aiResult, setAiResult] = useState(location.state?.aiResult || null);
   const [user, setUser] = useState(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [vehicles, setVehicles] = useState([]);
@@ -54,6 +55,9 @@ const TuningPage = () => {
   const [mode, setMode] = useState("auto"); // "auto" or "manual"
   const [manualSelection, setManualSelection] = useState([]);
   const [activeCategory, setActiveCategory] = useState("Air Intake");
+  const [loadedDbVehicle, setLoadedDbVehicle] = useState(null);
+  const [loadedSyntheticVehicle, setLoadedSyntheticVehicle] = useState(null);
+  const [manualView, setManualView] = useState("selected"); // "selected" or "browse"
 
   useEffect(() => {
     localStorage.setItem("modmyride_theme", "dark");
@@ -79,18 +83,62 @@ const TuningPage = () => {
         if (profileId) {
           try {
             const { profile } = await fetchUserProfileById(profileId);
-            if (profile && profile.vehicle) {
+            if (profile) {
+              const vehicleData = profile.vehicle || profile.customVehicle || {};
               setSelection({
-                type: profile.vehicle.type || "car",
-                brand: profile.vehicle.make || "",
-                model: profile.vehicle.model || "",
-                year: profile.vehicle.year || "",
-                fuelType: profile.vehicle.fuelType || "",
-                transmission: profile.vehicle.transmission || "",
+                type: vehicleData.type || "car",
+                brand: vehicleData.make || "",
+                model: vehicleData.model || "",
+                year: vehicleData.year || new Date().getFullYear(),
+                fuelType: vehicleData.fuelType || "",
+                transmission: vehicleData.transmission || "",
                 goal: profile.goal || "Performance",
                 budget: profile.totalBudget || 50000,
                 driverName: profile.name || ""
               });
+              
+              if (profile.vehicle) {
+                setLoadedDbVehicle(profile.vehicle);
+                setLoadedSyntheticVehicle(null);
+              } else if (profile.customVehicle) {
+                setLoadedSyntheticVehicle({
+                  _id: "ai-synthetic",
+                  make: vehicleData.make || "",
+                  model: vehicleData.model || "",
+                  type: vehicleData.type || "bike",
+                  year: vehicleData.year || new Date().getFullYear(),
+                  stockPower: 50,
+                  torqueNM: 35
+                });
+                setLoadedDbVehicle(null);
+              }
+              
+              const dbUpgrades = (profile.upgrades || []).map(u => ({
+                ...u,
+                totalScore: 100,
+                reason: u.reason || "Saved upgrade"
+              }));
+              
+              const customUpgradesMapped = (profile.customUpgrades || []).map((u, idx) => ({
+                _id: `ai-part-${idx}`,
+                name: u.name,
+                category: u.category,
+                price: u.price,
+                performanceGainHP: 0,
+                torqueGainNM: 0,
+                reason: u.reasoning || "AI recommended upgrade",
+                aiReasoning: u.reasoning,
+                isAiOnly: true
+              }));
+              
+              if (profile.isAiBuild && profile.aiResult) {
+                setAiResult(profile.aiResult);
+                setMode("ai");
+              } else {
+                setManualSelection([...dbUpgrades, ...customUpgradesMapped]);
+                setMode("manual");
+                setManualView("selected");
+              }
               setStep(4);
             }
           } catch (err) {
@@ -107,11 +155,17 @@ const TuningPage = () => {
   }, [navigate, profileId]);
 
   useEffect(() => {
-    if (aiResult) {
+    if (aiResult && !profileId) {
       setStep(4);
       setMode("ai");
+      // Populate selection from AI-extracted params so renderResults never hits "CONFIGURATION INCOMPLETE"
+      setSelection(s => ({
+        ...s,
+        goal: aiResult.extractedParams?.goal || s.goal || "Performance",
+        budget: Number(aiResult.extractedParams?.budget) || s.budget || 50000,
+      }));
     }
-  }, [aiResult]);
+  }, [aiResult, profileId]);
 
 
 
@@ -170,19 +224,55 @@ const TuningPage = () => {
 
   const aiVehicle = useMemo(() => {
     if (!aiResult || !aiResult.vehicle) return null;
-    return vehicles.find(v => v._id === aiResult.vehicle.id);
+    // 1. Exact ID match
+    const byId = vehicles.find(v => String(v._id) === String(aiResult.vehicle.id));
+    if (byId) return byId;
+    // 2. Fuzzy name match — e.g. "KTM Duke 390" matches vehicle with model="Duke 390"
+    const targetName = (aiResult.vehicle.name || "").toLowerCase();
+    const byName = vehicles.find(v => {
+      const vModel = v.model.toLowerCase();
+      const vMake  = v.make.toLowerCase();
+      return targetName.includes(vModel) || targetName.includes(vMake);
+    });
+    if (byName) return byName;
+    // 3. Synthetic vehicle so TuningPage never crashes — built from AI performanceStats
+    const parts = (aiResult.vehicle.name || "AI Vehicle").split(" ");
+    const split = Math.ceil(parts.length / 2);
+    return {
+      _id: "ai-synthetic",
+      make: parts.slice(0, split).join(" "),
+      model: parts.slice(split).join(" "),
+      type: "bike",
+      year: new Date().getFullYear(),
+      stockPower:  Math.round((aiResult.performanceStats?.estimatedHP  || 50) * 0.82),
+      torqueNM:    Math.round((aiResult.performanceStats?.estimatedTorque || 35) * 0.85),
+    };
   }, [aiResult, vehicles]);
 
   const aiUpgrades = useMemo(() => {
     if (!aiResult || !aiResult.recommendedUpgrades) return [];
-    return aiResult.recommendedUpgrades.map(rec => {
-      const upgrade = upgrades.find(u => u._id === rec.upgradeId);
-      return upgrade ? { ...upgrade, aiReasoning: rec.reasoning } : null;
-    }).filter(Boolean);
+    return aiResult.recommendedUpgrades.map((rec, idx) => {
+      // Try DB match by ID first
+      const dbPart = rec.upgradeId ? upgrades.find(u => String(u._id) === String(rec.upgradeId)) : null;
+      if (dbPart) return { ...dbPart, aiReasoning: rec.reasoning };
+      // Fall back: render the AI-described part as a display-only object
+      return {
+        _id: `ai-part-${idx}`,
+        name: rec.name || "Performance Upgrade",
+        category: rec.category || "General",
+        price: typeof rec.price === "number" ? rec.price : 0,
+        performanceGainHP: 0,
+        torqueGainNM: 0,
+        aiReasoning: rec.reasoning,
+        isAiOnly: true,
+      };
+    });
   }, [aiResult, upgrades]);
 
   const selectedVehicle = useMemo(() => {
     if (mode === "ai") return aiVehicle;
+    if (loadedDbVehicle) return loadedDbVehicle;
+    if (loadedSyntheticVehicle) return loadedSyntheticVehicle;
     return filteredVehicles.find(v => 
       v.make === selection.brand && 
       v.model === selection.model && 
@@ -190,7 +280,7 @@ const TuningPage = () => {
       v.fuelType === selection.fuelType &&
       v.transmission === selection.transmission
     );
-  }, [filteredVehicles, selection.brand, selection.model, selection.year, selection.fuelType, selection.transmission, mode, aiVehicle]);
+  }, [filteredVehicles, selection.brand, selection.model, selection.year, selection.fuelType, selection.transmission, mode, aiVehicle, loadedDbVehicle, loadedSyntheticVehicle]);
 
   useEffect(() => {
     if (selection.type === 'bike' && selection.year) {
@@ -355,13 +445,36 @@ const TuningPage = () => {
     
     setSaving(true);
     try {
+      const dbUpgradeIds = activeBuild
+        .filter(u => u._id && !String(u._id).startsWith("ai-part-"))
+        .map(u => u._id);
+        
+      const customUpgrades = activeBuild
+        .filter(u => !u._id || String(u._id).startsWith("ai-part-"))
+        .map(u => ({
+          name: u.name,
+          category: u.category,
+          price: u.price,
+          reasoning: u.aiReasoning || u.reason || ""
+        }));
+
+      const isSyntheticVehicle = selectedVehicle._id === "ai-synthetic";
+
       await saveUserProfile({
         name: selection.driverName || `${selectedVehicle.make} ${selectedVehicle.model} Build`,
-        vehicleId: selectedVehicle._id,
-        upgradeIds: activeBuild.map(u => u._id),
+        vehicleId: isSyntheticVehicle ? "ai-synthetic" : selectedVehicle._id,
+        customVehicle: isSyntheticVehicle ? {
+          make: selectedVehicle.make,
+          model: selectedVehicle.model,
+          type: selection.type
+        } : undefined,
+        upgradeIds: dbUpgradeIds,
+        customUpgrades: customUpgrades,
         goal: selection.goal,
         totalBudget: selection.budget,
-        totalCost: totalCost
+        totalCost: totalCost,
+        isAiBuild: mode === "ai",
+        aiResult: mode === "ai" ? aiResult : undefined
       });
       navigate("/profiles");
     } catch (err) {
@@ -377,7 +490,10 @@ const TuningPage = () => {
   };
 
   const isStepValid = (n) => {
-    if (n === 1) return !!(selection.brand && selection.model && selection.year && (selection.type === 'bike' || (selection.fuelType && selection.transmission)));
+    if (n === 1) {
+      if (mode === "ai" || profileId || loadedSyntheticVehicle || loadedDbVehicle) return !!selectedVehicle;
+      return !!(selection.brand && selection.model && selection.year && (selection.type === 'bike' || (selection.fuelType && selection.transmission)));
+    }
     if (n === 2) return !!selection.goal;
     if (n === 3) return selection.budget >= 10000;
     return true;
@@ -687,7 +803,8 @@ const TuningPage = () => {
     const missingGoal = !selection.goal;
     const missingBudget = selection.budget < 10000;
 
-    if (missingVehicle || missingGoal || missingBudget) {
+    // In AI mode all data comes from aiResult — skip stepper validation entirely
+    if (mode !== "ai" && (missingVehicle || missingGoal || missingBudget)) {
       return (
         <div className="text-center py-24 animate-in fade-in zoom-in duration-700 bg-[#111111] machined-edge max-w-2xl mx-auto">
           <span className="material-symbols-outlined text-6xl text-[#C0392B] mb-6">tune</span>
@@ -707,6 +824,8 @@ const TuningPage = () => {
         </div>
       );
     }
+    // Safety guard — should never be null after aiVehicle synthetic fallback, but prevents crash
+    if (!selectedVehicle) return null;
 
     return (
       <div className="space-y-12 animate-in fade-in slide-in-from-bottom duration-700">
@@ -725,28 +844,35 @@ const TuningPage = () => {
             </div>
           </div>
 
-          <div className="flex bg-[#111111] p-1.5 machined-edge rounded-none border border-white/5">
-            <button 
-              onClick={() => setMode("auto")}
-              className={`px-8 py-3 font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mode === "auto" ? 'bg-[#C0392B] text-white shadow-[0_0_20px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              Smart Auto
-            </button>
-            <button 
-              onClick={() => setMode("manual")}
-              className={`px-8 py-3 font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mode === "manual" ? 'bg-[#C0392B] text-white shadow-[0_0_20px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              Manual Custom
-            </button>
-            {aiResult && (
+          {mode !== "ai" ? (
+            <div className="flex bg-[#111111] p-1.5 machined-edge rounded-none border border-white/5">
               <button 
-                onClick={() => setMode("ai")}
-                className={`px-8 py-3 font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mode === "ai" ? 'bg-[#C0392B] text-white shadow-[0_0_20px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
+                onClick={() => setMode("auto")}
+                className={`px-8 py-3 font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mode === "auto" ? 'bg-[#C0392B] text-white shadow-[0_0_20px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
               >
-                AI Advisor
+                Smart Auto
               </button>
-            )}
-          </div>
+              <button 
+                onClick={() => setMode("manual")}
+                className={`px-8 py-3 font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mode === "manual" ? 'bg-[#C0392B] text-white shadow-[0_0_20px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                Manual Custom
+              </button>
+              {aiResult && (
+                <button 
+                  onClick={() => setMode("ai")}
+                  className={`px-8 py-3 font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 ${mode === "ai" ? 'bg-[#C0392B] text-white shadow-[0_0_20px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
+                >
+                  AI Advisor
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-6 py-3 bg-[#111111] machined-edge border border-[#C0392B]/20 text-[#C0392B]">
+              <span className="material-symbols-outlined text-sm animate-pulse">auto_awesome</span>
+              <span className="font-['Oswald'] text-[11px] font-bold uppercase tracking-[0.2em]">AI Advisor Active</span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -912,6 +1038,23 @@ const TuningPage = () => {
               </div>
 
               {mode === "manual" && (
+                <div className="flex bg-[#1d100e] border border-white/5 p-1 mb-6">
+                  <button 
+                    onClick={() => setManualView("selected")}
+                    className={`flex-1 py-2 font-['Oswald'] text-[9px] font-bold uppercase tracking-widest transition-all ${manualView === "selected" ? 'bg-[#C0392B] text-white shadow-[0_0_10px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  >
+                    Selected Parts ({activeBuild.length})
+                  </button>
+                  <button 
+                    onClick={() => setManualView("browse")}
+                    className={`flex-1 py-2 font-['Oswald'] text-[9px] font-bold uppercase tracking-widest transition-all ${manualView === "browse" ? 'bg-[#C0392B] text-white shadow-[0_0_10px_rgba(192,57,43,0.3)]' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  >
+                    Browse Catalog
+                  </button>
+                </div>
+              )}
+
+              {mode === "manual" && manualView === "browse" && (
                 <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                   {manualCategories.map(cat => (
                     <button
@@ -926,7 +1069,7 @@ const TuningPage = () => {
               )}
 
               <div className="space-y-3 min-h-[300px]">
-                {mode === "auto" || mode === "ai" ? (
+                {mode === "auto" || mode === "ai" || (mode === "manual" && manualView === "selected") ? (
                   activeBuild.map((part, i) => (
                     <div key={i} className="group p-4 bg-zinc-900/50 border border-white/5 hover:border-[#C0392B]/30 transition-all">
                       <div className="flex justify-between items-start mb-1">
@@ -937,7 +1080,7 @@ const TuningPage = () => {
                         <p className="text-white font-['Oswald'] text-[11px]">₹{part.price.toLocaleString()}</p>
                       </div>
                       <p className="text-zinc-600 text-[9px] font-body-sm mt-1 leading-relaxed">
-                        {mode === "ai" ? part.aiReasoning : part.reason}
+                        {part.aiReasoning || part.reason || "Custom selected upgrade for your vehicle"}
                       </p>
                     </div>
                   ))
@@ -1040,75 +1183,7 @@ const TuningPage = () => {
 
   return (
     <div className="min-h-screen bg-[#1d100e] text-[#f7ddd9] font-body-md overflow-x-hidden">
-      {/* Navbar (Same as Landing) */}
-      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/90 backdrop-blur-lg border-b border-white/5 h-20 flex items-center">
-        <div className="w-full relative flex items-center justify-between px-8 md:px-16">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-8 h-8 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
-              <span className="material-symbols-outlined text-white -rotate-45 text-lg">speed</span>
-            </div>
-            <span className="font-['Oswald'] text-2xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
-            <button onClick={() => navigate("/")} className="nav-link font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 transition-colors">Home</button>
-            <button onClick={handleStartTuning} className="nav-active font-['Oswald'] uppercase tracking-widest text-[11px] transition-colors">Recommendation</button>
-            <button onClick={() => navigate("/ai-advisor")} className="nav-link font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 transition-colors">AI Advisor</button>
-            <button onClick={() => navigate("/profiles")} className="nav-link font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 transition-colors">Saved Profiles</button>
-          </div>
-
-          <div className="flex justify-end items-center relative">
-            {user ? (
-            <div className="flex items-center gap-4 relative">
-              <button
-                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="h-9 w-9 rounded-full bg-zinc-800 machined-edge flex items-center justify-center overflow-hidden hover:border-[#C0392B] transition-all group"
-              >
-                <span className="material-symbols-outlined text-zinc-500 group-hover:text-white text-base">person</span>
-              </button>
-
-              {isProfileMenuOpen && (
-                <div className="absolute right-0 top-12 w-64 bg-[#1A1A1A] machined-edge shadow-2xl z-50 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
-                  <div className="border-b border-white/5 pb-4">
-                    <p className="font-['Oswald'] text-white uppercase text-xs tracking-widest mb-1">{user.username || 'User'}</p>
-                    <p className="text-zinc-500 text-[10px] truncate">{user.email}</p>
-                  </div>
-
-                  <div className="space-y-1">
-                    {user.role === 'admin' && (
-                      <button
-                        onClick={() => navigate("/admin")}
-                        className="w-full flex items-center gap-2 text-zinc-400 hover:text-white hover:bg-white/5 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
-                      >
-                        <span className="material-symbols-outlined text-sm">dashboard</span>
-                        <span>Admin Dashboard</span>
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="border-t border-white/5 pt-4">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2 text-[#C0392B] hover:bg-[#C0392B]/10 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest"
-                    >
-                      <span className="material-symbols-outlined text-sm">logout</span>
-                      <span>Logout Account</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={() => navigate("/auth")}
-              className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
-            >
-              Sign In
-            </button>
-          )}
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="pt-28 pb-24 max-w-7xl mx-auto px-8 md:px-16 min-h-[60vh]">
         {loading ? (

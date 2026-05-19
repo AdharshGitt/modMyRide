@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   fetchCurrentUser,
   getHealthStatus,
@@ -10,6 +10,7 @@ import {
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -20,6 +21,15 @@ const AuthPage = () => {
   const [user, setUser] = useState(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [apiStatus, setApiStatus] = useState("Checking API…");
+
+  useEffect(() => {
+    const modeParam = searchParams.get("mode");
+    if (modeParam === "register" || modeParam === "signup") {
+      setMode("signup");
+    } else {
+      setMode("login");
+    }
+  }, [searchParams]);
 
   const loadSession = useCallback(async () => {
     try {
@@ -163,7 +173,7 @@ const AuthPage = () => {
           </h1>
           <p className="text-zinc-400 mt-2 text-sm">
             {mode === "login"
-              ? "Sign in to continue building your ride."
+              ? "Log in to continue building your ride."
               : "Join to save mods and track your build."}
           </p>
         </div>
@@ -174,14 +184,14 @@ const AuthPage = () => {
             className={`flex-1 pb-3 font-label-caps uppercase tracking-widest text-sm transition-colors ${mode === "login" ? "text-[#C0392B] border-b-2 border-[#C0392B]" : "text-zinc-500 hover:text-white"}`}
             onClick={() => switchMode("login")}
           >
-            Sign in
+            Login
           </button>
           <button
             type="button"
             className={`flex-1 pb-3 font-label-caps uppercase tracking-widest text-sm transition-colors ${mode === "signup" ? "text-[#C0392B] border-b-2 border-[#C0392B]" : "text-zinc-500 hover:text-white"}`}
             onClick={() => switchMode("signup")}
           >
-            Sign up
+            Register
           </button>
         </div>
 
@@ -260,7 +270,7 @@ const AuthPage = () => {
             disabled={loading} 
             className="w-full py-3 mt-4 bg-[#C0392B] text-white font-label-caps tracking-widest hover:bg-[#a93226] transition-colors uppercase text-sm disabled:opacity-50"
           >
-            {loading ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
+            {loading ? "Please wait…" : mode === "login" ? "Log in" : "Register"}
           </button>
         </form>
 
@@ -276,7 +286,7 @@ const AuthPage = () => {
             <>
               Already have an account?{" "}
               <button type="button" className="text-[#C0392B] hover:underline" onClick={() => switchMode("login")}>
-                Sign in
+                Login
               </button>
             </>
           )}

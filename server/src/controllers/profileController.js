@@ -4,16 +4,20 @@ import Upgrade from "../models/Upgrade.js";
 
 export const saveProfile = async (req, res) => {
   try {
-    const { name, vehicleId, upgradeIds, goal, totalBudget, totalCost } = req.body;
+    const { name, vehicleId, customVehicle, upgradeIds, customUpgrades, goal, totalBudget, totalCost, isAiBuild, aiResult } = req.body;
     
     const profile = new SavedProfile({
       user: req.user.id,
       name,
-      vehicle: vehicleId,
-      upgrades: upgradeIds,
+      vehicle: (vehicleId === "ai-synthetic" || !vehicleId) ? undefined : vehicleId,
+      customVehicle: (vehicleId === "ai-synthetic" || !vehicleId) ? customVehicle : undefined,
+      upgrades: upgradeIds || [],
+      customUpgrades: customUpgrades || [],
       goal,
       totalBudget,
-      totalCost
+      totalCost,
+      isAiBuild: !!isAiBuild,
+      aiResult: aiResult || undefined
     });
 
     await profile.save();

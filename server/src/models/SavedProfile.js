@@ -13,11 +13,22 @@ const savedProfileSchema = new mongoose.Schema({
   vehicle: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Vehicle',
-    required: true
+    required: false
+  },
+  customVehicle: {
+    make: String,
+    model: String,
+    type: { type: String }
   },
   upgrades: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Upgrade'
+  }],
+  customUpgrades: [{
+    name: String,
+    category: String,
+    price: Number,
+    reasoning: String
   }],
   goal: {
     type: String,
@@ -30,6 +41,14 @@ const savedProfileSchema = new mongoose.Schema({
   totalCost: {
     type: Number,
     required: true
+  },
+  isAiBuild: {
+    type: Boolean,
+    default: false
+  },
+  aiResult: {
+    type: mongoose.Schema.Types.Mixed,
+    required: false
   },
   image: {
     type: String,

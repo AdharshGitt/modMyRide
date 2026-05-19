@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchCurrentUser, fetchVehicles, fetchAIRecommendation, setAuthToken } from "../services/api.js";
+import Navbar from "../components/Navbar.jsx";
 
 const AIAdvisorPage = () => {
   const navigate = useNavigate();
@@ -135,48 +136,7 @@ const AIAdvisorPage = () => {
 
   return (
     <div className="min-h-screen bg-[#1d100e] text-[#f7ddd9] font-body-md overflow-x-hidden">
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-[#1d100e]/90 backdrop-blur-lg border-b border-white/5 h-20 flex items-center">
-        <div className="w-full relative flex items-center justify-between px-8 md:px-16">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-8 h-8 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
-              <span className="material-symbols-outlined text-white -rotate-45 text-lg">speed</span>
-            </div>
-            <span className="font-['Oswald'] text-2xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
-            <button onClick={() => navigate("/")} className="nav-link font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 transition-colors">Home</button>
-            <button onClick={() => navigate("/tuning")} className="nav-link font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 transition-colors">Recommendation</button>
-            <button className="nav-active font-['Oswald'] uppercase tracking-widest text-[11px] transition-colors">AI Advisor</button>
-            <button onClick={() => navigate("/profiles")} className="nav-link font-['Oswald'] uppercase tracking-widest text-[11px] text-zinc-400 transition-colors">Saved Profiles</button>
-          </div>
-
-          <div className="flex justify-end items-center relative">
-            {user ? (
-              <div className="flex items-center gap-4 relative">
-                <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="h-9 w-9 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden hover:border-[#C0392B] transition-all group">
-                  <span className="material-symbols-outlined text-zinc-500 group-hover:text-white text-base">person</span>
-                </button>
-                {isProfileMenuOpen && (
-                  <div className="absolute right-0 top-12 w-64 bg-[#1A1A1A] shadow-2xl z-50 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="border-b border-white/5 pb-4">
-                      <p className="font-['Oswald'] text-white uppercase text-xs tracking-widest mb-1">{user.username}</p>
-                      <p className="text-zinc-500 text-[10px] truncate">{user.email}</p>
-                    </div>
-                    <button onClick={handleLogout} className="w-full flex items-center gap-2 text-[#C0392B] hover:bg-[#C0392B]/10 p-2 transition-colors font-label-caps text-[10px] uppercase tracking-widest">
-                      <span className="material-symbols-outlined text-sm">logout</span>
-                      <span>Logout Account</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button onClick={() => navigate("/auth")} className="bg-[#C0392B] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs">Sign In</button>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Main Content */}
       <main className="pt-28 pb-24 px-8 md:px-16 max-w-7xl mx-auto">
@@ -259,7 +219,7 @@ const AIAdvisorPage = () => {
         </div>
 
         {/* AI Results Dashboard */}
-        {aiResult && (
+        {aiResult && !aiResult.missingInfo && (
           <div id="ai-results-section" className="mt-20 space-y-10 animate-in fade-in slide-in-from-bottom duration-1000">
             {/* Header / Score Strip */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#C0392B]/10 border border-[#C0392B]/20 p-6 machined-edge">
@@ -309,11 +269,11 @@ const AIAdvisorPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-8 border-t border-white/5 relative z-10">
                     <div className="space-y-4">
                       <h5 className="font-label-caps text-[9px] text-zinc-600 uppercase tracking-[0.2em]">Mechanical Impact</h5>
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-1">
                         {Object.entries(aiResult.impact || {}).map(([key, val]) => (
-                          <div key={key} className="flex justify-between items-center py-2 border-b border-white/[0.03]">
-                            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{key}</span>
-                            <span className="text-[11px] text-white font-medium">{val}</span>
+                          <div key={key} className="flex justify-between items-start gap-4 py-3 border-b border-white/[0.03]">
+                            <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0 pt-0.5">{key}</span>
+                            <span className="text-[11px] text-white font-medium text-right leading-relaxed">{val}</span>
                           </div>
                         ))}
                       </div>
@@ -354,15 +314,18 @@ const AIAdvisorPage = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                     {aiResult.stages?.map((stage, i) => (
-                      <div key={i} className="space-y-5">
-                        <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-[10px] font-bold text-[#C0392B]">0{i+1}</span>
-                          <h5 className="text-white font-['Oswald'] font-bold text-xs uppercase tracking-widest">{stage.label}</h5>
+                      <div key={i} className="space-y-5 group">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 w-10 h-10 bg-[#C0392B]/10 border border-[#C0392B]/40 flex items-center justify-center group-hover:bg-[#C0392B]/20 transition-colors">
+                            <span className="font-['Oswald'] text-sm font-black text-[#C0392B] leading-none">0{i+1}</span>
+                          </div>
+                          <h5 className="text-white font-['Oswald'] font-bold text-sm uppercase tracking-widest leading-tight pt-1.5">{stage.label}</h5>
                         </div>
-                        <ul className="space-y-3 pl-9">
+                        <ul className="space-y-3 pl-14">
                           {stage.parts?.map((part, j) => (
-                            <li key={j} className="text-zinc-500 text-[10px] leading-relaxed group hover:text-zinc-300 transition-colors">
-                              {part}
+                            <li key={j} className="text-zinc-500 text-[10px] leading-relaxed hover:text-zinc-300 transition-colors flex items-start gap-2">
+                              <span className="w-1 h-1 rounded-full bg-[#C0392B]/60 flex-shrink-0 mt-1.5"></span>
+                              <span>{part}</span>
                             </li>
                           ))}
                         </ul>
