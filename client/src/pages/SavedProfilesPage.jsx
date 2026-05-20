@@ -83,12 +83,12 @@ const SavedProfilesPage = () => {
       <Navbar />
 
       <main className="pt-28 pb-24 max-w-7xl mx-auto px-8 md:px-16 min-h-[60vh]">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-8">
           <div>
             <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-[0.2em] text-sm mb-4 tracking-widest">User Profile</h2>
             <h1 className="text-5xl md:text-6xl font-['Oswald'] font-black uppercase text-white tracking-tighter">Saved Profiles</h1>
           </div>
-          <p className="text-zinc-500 max-w-sm text-right font-body-sm">
+          <p className="text-zinc-500 max-w-sm text-left md:text-right font-body-sm">
             Access and manage your custom vehicle configurations and performance roadmaps.
           </p>
         </div>

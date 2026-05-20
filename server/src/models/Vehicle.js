@@ -24,8 +24,6 @@ const vehicleSchema = new mongoose.Schema(
     displacement: { type: String, default: "" },
     description: { type: String, default: "" },
     image: { type: String, default: "" },
-    brandLogo: { type: String, default: "" },
-    category: { type: String, default: "" },
   },
   { timestamps: true }
 );

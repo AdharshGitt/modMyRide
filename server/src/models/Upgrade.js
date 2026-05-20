@@ -29,9 +29,6 @@ const upgradeSchema = new mongoose.Schema(
     compatibleVehicles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Vehicle" }],
     goals: [{ type: String }],
     stage: { type: String, enum: ["Stage 1", "Stage 2", "Stage 3", "Universal"], default: "Universal" },
-    image: { type: String, default: "" },
-    description: { type: String, default: "" },
-
   },
   { timestamps: true }
 );

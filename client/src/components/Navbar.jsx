@@ -170,7 +170,7 @@ const Navbar = () => {
 
       {/* Mobile Drawer */}
       <div
-        className={`fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-[#170b09] border-l border-white/5 z-50 p-8 flex flex-col gap-8 shadow-2xl transition-transform duration-300 md:hidden ${
+        className={`fixed top-0 right-0 bottom-0 w-full bg-[#170b09] z-50 p-8 flex flex-col gap-8 shadow-2xl transition-transform duration-300 md:hidden ${
           isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >

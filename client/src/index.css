@@ -4,7 +4,7 @@
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  
+
   /* Stitch Design System Tokens - High-Octane Performance */
   --bg-color: #1d100e;
   --on-bg: #f7ddd9;
@@ -21,7 +21,7 @@
   --surface-container-high: #352624;
   --outline: #a88a85;
   --machined-edge: rgba(255, 255, 255, 0.07);
-  
+
   /* Legacy/Support Variables */
   color: var(--on-bg);
   background-color: var(--bg-color);
@@ -38,8 +38,10 @@
 
 /* Hide scrollbar for IE, Edge and Firefox */
 * {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 /* Fix dropdown arrows */
@@ -68,15 +70,19 @@ body {
 .machined-edge {
   border: 1px solid rgba(255, 255, 255, 0.07);
 }
+
 .bg-near-black {
   background-color: #0A0A0A;
 }
+
 .bg-surface-elevated {
   background-color: #1A1A1A;
 }
+
 .bg-surface-high {
   background-color: #242424;
 }
+
 .header-anchor {
   font-family: 'Oswald';
   letter-spacing: -0.05em;
@@ -184,7 +190,7 @@ body.light-mode .text-\[\#f7ddd9\] {
   color: #0f172a !important;
 }
 
-body.light-mode .text-zinc-400, 
+body.light-mode .text-zinc-400,
 body.light-mode .text-zinc-500,
 body.light-mode .text-zinc-600 {
   color: #64748b !important;
@@ -262,8 +268,13 @@ body.light-mode .bg-zinc-800 {
 }
 
 @keyframes horizontal-shine {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
 }
 
 /* Nav glow underline — hover + active */
@@ -324,12 +335,10 @@ body.light-mode .bg-zinc-800 {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent);
   animation: horizontal-shine 2s infinite;
 }
 
@@ -685,9 +694,17 @@ body.light-mode .bg-zinc-800 {
   opacity: 0.2;
 }
 
-.users-icon { background: #38bdf8; }
-.admin-icon { background: #818cf8; }
-.regular-icon { background: #10b981; }
+.users-icon {
+  background: #38bdf8;
+}
+
+.admin-icon {
+  background: #818cf8;
+}
+
+.regular-icon {
+  background: #10b981;
+}
 
 .users-section h2 {
   font-size: 1.5rem;
@@ -781,7 +798,9 @@ body.light-mode .bg-zinc-800 {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ==========================================================================
@@ -928,5 +947,17 @@ body.light-mode .bg-zinc-800 {
 }
 
 
-.spinner { width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.1); border-left-color: #C0392B; border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-left-color: #C0392B;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

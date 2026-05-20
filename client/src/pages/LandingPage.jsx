@@ -105,12 +105,12 @@ const LandingPage = () => {
       {/* Steps Section */}
       <section id="recommend" className="py-32 px-8 md:px-16 bg-[#170b09]">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-20 gap-8">
             <div className="max-w-2xl">
               <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-[0.2em] text-sm mb-4">Precision Workflow</h2>
               <h3 className="text-4xl md:text-5xl font-['Oswald'] font-bold uppercase text-white tracking-tight">How We Tune Your Experience</h3>
             </div>
-            <p className="text-zinc-500 max-w-sm text-right font-body-sm">
+            <p className="text-zinc-500 max-w-sm text-left md:text-right font-body-sm">
               Our recommendation engine uses real-world data and mechanical expertise to build your perfect roadmap.
             </p>
           </div>
