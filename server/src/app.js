@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/", (_req, res) => {
-  res.json({ message: "Welcome to the MERN template API" });
+  res.json({ message: "Welcome to the ModMyRide API" });
 });
 
 app.use("/api", routes);

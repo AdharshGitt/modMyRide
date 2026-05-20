@@ -38,9 +38,9 @@ const Navbar = () => {
     navigate("/");
   };
 
-  const handleNavigation = (path) => {
+  const handleNavigation = (path, options = {}) => {
     setIsMobileMenuOpen(false);
-    navigate(path);
+    navigate(path, options);
   };
 
   const isActive = (path) => location.pathname === path;
@@ -140,7 +140,7 @@ const Navbar = () => {
               </div>
             ) : (
               <button
-                onClick={() => navigate("/auth")}
+                onClick={() => navigate("/auth", { state: { from: location.pathname } })}
                 className="bg-[#C0392B] hover:bg-[#a93226] text-white px-6 py-2.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)]"
               >
                 Login
@@ -254,13 +254,13 @@ const Navbar = () => {
           ) : (
             <div className="flex flex-col gap-3">
               <button
-                onClick={() => handleNavigation("/auth")}
+                onClick={() => handleNavigation("/auth", { state: { from: location.pathname } })}
                 className="w-full bg-[#C0392B] hover:bg-[#a93226] text-white py-3.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all shadow-[0_4px_20px_rgba(192,57,43,0.3)] text-center"
               >
                 Login
               </button>
               <button
-                onClick={() => handleNavigation("/auth?mode=register")}
+                onClick={() => handleNavigation("/auth?mode=register", { state: { from: location.pathname } })}
                 className="w-full border border-white/20 text-white hover:bg-white/5 py-3.5 font-['Oswald'] uppercase tracking-widest text-xs transition-all text-center"
               >
                 Register

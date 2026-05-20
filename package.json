@@ -1,8 +1,8 @@
 {
-  "name": "mern-template",
+  "name": "modmyride",
   "version": "1.0.0",
   "private": true,
-  "description": "Standard MERN monolithic template",
+  "description": "AI-powered automotive performance tuning advisor and profile manager for cars and bikes.",
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "server": "npm run dev --prefix server",

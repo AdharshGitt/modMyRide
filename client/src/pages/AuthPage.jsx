@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   fetchCurrentUser,
   getHealthStatus,
@@ -10,6 +10,7 @@ import {
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -77,6 +78,7 @@ const AuthPage = () => {
     }
     setLoading(true);
     try {
+      const from = location.state?.from || "/tuning";
       if (mode === "signup") {
         const data = await registerUser(email, password, username);
         setAuthToken(data.token);
@@ -84,7 +86,7 @@ const AuthPage = () => {
         if (data.user.role === "admin") {
           navigate("/admin");
         } else {
-          navigate("/tuning");
+          navigate(from);
         }
       } else {
         const data = await loginUser(email, password);
@@ -93,7 +95,7 @@ const AuthPage = () => {
         if (data.user.role === "admin") {
           navigate("/admin");
         } else {
-          navigate("/tuning");
+          navigate(from);
         }
       }
       setPassword("");
@@ -195,7 +197,7 @@ const AuthPage = () => {
           </button>
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit} method="post" action="#">
           {error && (
             <div className="bg-[#C0392B]/10 border border-[#C0392B]/20 text-[#C0392B] px-4 py-3 text-sm" role="alert">
               {error}
@@ -219,14 +221,15 @@ const AuthPage = () => {
           )}
 
           <div className="space-y-2">
-            <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Email</label>
+            <label htmlFor="email" className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Email</label>
             <input
+              id="email"
               type="email"
-              name="email"
+              name="username"
               value={email}
               onChange={(ev) => setEmail(ev.target.value)}
               placeholder="you@example.com"
-              autoComplete="email"
+              autoComplete="username"
               required
               disabled={loading}
               className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm disabled:opacity-50"
@@ -234,8 +237,9 @@ const AuthPage = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Password</label>
+            <label htmlFor="password" className="block font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Password</label>
             <input
+              id="password"
               type="password"
               name="password"
               value={password}

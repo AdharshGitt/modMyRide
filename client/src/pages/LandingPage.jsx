@@ -42,7 +42,7 @@ const LandingPage = () => {
       navigate("/tuning");
     } else {
       console.log("No user found, redirecting to Auth");
-      navigate("/auth");
+      navigate("/auth", { state: { from: "/tuning" } });
     }
   };
 
@@ -153,30 +153,34 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="bg-[#170b09] border-t border-white/5 py-16 px-8 md:px-16">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 lg:col-span-1">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+          <div className="md:col-span-5">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-6 h-6 bg-[#C0392B] flex items-center justify-center rounded-sm rotate-45">
                 <span className="material-symbols-outlined text-white -rotate-45 text-xs">speed</span>
               </div>
               <span className="font-['Oswald'] text-xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
             </div>
-            <p className="text-zinc-500 text-sm mb-6">
+            <p className="text-zinc-500 text-sm mb-6 max-w-sm">
               The definitive tuning platform for the modern Indian motorist. Precision engineered for performance enthusiasts.
             </p>
           </div>
 
-          <div>
-            <h4 className="font-['Oswald'] uppercase tracking-widest text-xs text-white mb-6">Explore</h4>
+          <div className="md:col-span-3">
+            <h4 className="font-['Oswald'] uppercase tracking-widest text-xs text-white mb-6">Platform</h4>
             <ul className="space-y-4">
-              <li><button onClick={() => navigate("/")} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">About Us</button></li>
-              <li><button onClick={() => document.getElementById('recommend')?.scrollIntoView({ behavior: 'smooth' })} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Performance Guide</button></li>
               <li><button onClick={handleStartTuning} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Recommendations</button></li>
+              <li><button onClick={() => navigate("/ai-advisor")} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">AI Advisor</button></li>
+              <li><button onClick={() => navigate("/profiles")} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Saved Profiles</button></li>
             </ul>
           </div>
 
-          <div></div>
-          <div></div>
+          <div className="md:col-span-4">
+            <h4 className="font-['Oswald'] uppercase tracking-widest text-xs text-white mb-6">Resources</h4>
+            <ul className="space-y-4">
+              <li><button onClick={() => document.getElementById('recommend')?.scrollIntoView({ behavior: 'smooth' })} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Performance Guide</button></li>
+            </ul>
+          </div>
         </div>
         <div className="pt-8 border-t border-white/5 text-center">
           <p className="text-zinc-600 text-[10px] uppercase tracking-widest font-['Oswald']">

@@ -27,7 +27,7 @@ const SavedProfilesPage = () => {
         setProfiles(data.profiles);
       } catch (err) {
         console.error("Auth/Fetch Error:", err);
-        navigate("/auth");
+        navigate("/auth", { state: { from: "/profiles" } });
       } finally {
         setLoading(false);
       }

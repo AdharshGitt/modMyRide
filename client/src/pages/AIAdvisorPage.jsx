@@ -49,6 +49,10 @@ const AIAdvisorPage = () => {
     const fetchData = async () => {
       try {
         const { user: u } = await fetchCurrentUser();
+        if (!u) {
+          navigate("/auth", { state: { from: "/ai-advisor" } });
+          return;
+        }
         setUser(u);
         const vData = await fetchVehicles();
         if (vData && vData.vehicles) {
@@ -59,6 +63,7 @@ const AIAdvisorPage = () => {
         }
       } catch (err) {
         console.error("Fetch Error:", err);
+        navigate("/auth", { state: { from: "/ai-advisor" } });
       } finally {
         setLoading(false);
       }
