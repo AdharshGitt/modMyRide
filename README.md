@@ -1,78 +1,82 @@
-# ModMyRide 🚗🏍️
+# ModMyRide
 
-**ModMyRide** is a premium, AI-powered automotive performance tuning and recommendation platform engineered specifically for Indian car and bike enthusiasts. By combining mechanical engineering compatibility rules, a comprehensive MongoDB catalog of vehicles and aftermarket parts, and state-of-the-art Generative AI, ModMyRide creates custom tuning roadmaps based on budget, goals, and driving styles.
+ModMyRide is a full-stack automotive performance tuning platform built for Indian car and bike enthusiasts. It combines a curated catalog of vehicles and aftermarket parts with AI-driven recommendations to help users plan realistic, budget-aware modification builds.
 
----
-
-## 🔥 Key Features
-
-- **🎯 Precision 4-Step Recommendation Wizard**: Build your dream machine by selecting a vehicle, choosing performance goals (Handling, Acceleration, Track, or Off-road), setting a budget in INR, and receiving a complete compatible parts roadmap.
-- **🤖 Gemini-Powered AI Advisor**: Have a direct chat with our custom-tuned mechanical engineering AI model to ask for custom parts recommendation, compatibility checks, and phase-by-phase building advice.
-- **💾 Saved Profiles**: Save your customized configurations, track total budget, review parts lists, and manage multiple builds (both Cars and Bikes) in one high-octane dashboard.
-- **🔒 Smart Auth & Navigation Guarding**: Integrated role-based authentication that dynamically redirects users back to their requested actions (AI Advisor, Saved Profiles, Tuning Wizard) immediately after a successful sign-in.
-- **🎨 Rich High-Octane Aesthetics**: Stunning, responsive dark-themed visual experience with modern carbon accents, red highlights, glassmorphic menus, and smooth micro-animations.
+The platform handles compatibility validation between vehicles and parts, generates phased upgrade roadmaps, and provides a conversational AI advisor for personalized tuning guidance — all priced and formatted for the Indian market.
 
 ---
 
-## 🛠️ Technology Stack
+## Features
 
-- **Frontend**: React (Vite), React Router v6, TailwindCSS/Vanilla CSS, Oswald & Inter custom typography.
-- **Backend**: Node.js, Express.js, JWT Authentication.
-- **Database**: MongoDB (Mongoose), featuring structured schemas for:
-  - `Users` (Admin & standard enthusiast accounts)
-  - `Vehicles` (Cars and Bikes sold in the Indian market)
-  - `Parts` (Aftermarket performance components, compatibility mapping, and prices)
-  - `Profiles` (Saved configurations and tuning roadmaps)
-- **AI Integration**: Gemini AI (Vertex AI/Google AI Studio) tuned for mechanical advice.
+- **4-Step Recommendation Wizard** — Select a vehicle, define performance goals (handling, acceleration, track, or off-road), set a budget in INR, and receive a compatible parts roadmap with cost breakdowns.
+- **AI Advisor** — Chat interface powered by Gemini AI, configured with mechanical engineering context to answer questions about part compatibility, build sequencing, and performance trade-offs.
+- **Saved Profiles** — Store and manage multiple vehicle configurations, review parts lists, and track spending across builds.
+- **Authentication and Route Guarding** — JWT-based auth with role separation (admin/user). Unauthenticated users are redirected back to their intended page after login.
+- **Admin Dashboard** — Administrative tools for managing vehicles, parts, user accounts, and monitoring platform activity.
 
 ---
 
-## 📂 Project Structure
+## Tech Stack
 
-```text
+| Layer       | Technologies                                                  |
+|-------------|---------------------------------------------------------------|
+| Frontend    | React (Vite), React Router v6, Vanilla CSS, Oswald & Inter fonts |
+| Backend     | Node.js, Express.js, JWT authentication                       |
+| Database    | MongoDB with Mongoose (Users, Vehicles, Parts, Profiles)      |
+| AI          | Google Gemini API                                             |
+
+---
+
+## Project Structure
+
+```
 ModMyRide/
-├── client/                     # Frontend React Application
-│   ├── public/                 # Static assets
+├── client/                     # React frontend
+│   ├── public/
 │   └── src/
-│       ├── assets/             # Images and local media
-│       ├── components/         # Reusable UI Components (Navbar, etc.)
-│       ├── pages/              # Main App Pages (Tuning, AIAdvisor, Auth, SavedProfiles, Landing)
-│       ├── services/           # Backend API Connections
-│       ├── App.jsx             # React Routes
-│       └── main.jsx            # Entry point
+│       ├── assets/             # Images and static media
+│       ├── components/         # Shared UI components (Navbar, etc.)
+│       ├── pages/              # Page-level components
+│       ├── services/           # API service layer
+│       ├── App.jsx             # Route definitions
+│       └── main.jsx            # Application entry point
 │
-├── server/                     # Backend Node/Express API
+├── server/                     # Express backend
 │   └── src/
-│       ├── config/             # DB & Env Configurations
-│       ├── controllers/        # Route Handlers (Auth, Profile, Part compatibility)
-│       ├── middleware/         # Auth guarding, CORS validation
-│       ├── models/             # Mongoose Schemas (User, Vehicle, Part, Profile)
-│       ├── routes/             # API Endpoints
-│       ├── app.js              # Express app setup
-│       └── server.js           # Server startup script
+│       ├── config/             # Database and environment config
+│       ├── controllers/        # Request handlers
+│       ├── middleware/         # Auth and CORS middleware
+│       ├── models/             # Mongoose schemas
+│       ├── routes/             # API route definitions
+│       ├── app.js              # Express app configuration
+│       └── server.js           # Server entry point
 │
-├── package.json                # Project-wide script orchestrator
-└── README.md                   # You are here!
+├── package.json                # Root-level scripts (install, dev)
+└── README.md
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+## Getting Started
 
 ### Prerequisites
-- Node.js (v18+)
-- MongoDB running locally or a MongoDB Atlas URI
-- Gemini API Key
 
-### 📦 1. Installation
-Install all dependencies for both the `client` and `server` folders using the top-level orchestration script:
+- Node.js v18 or later
+- MongoDB (local instance or Atlas connection string)
+- A Gemini API key from Google AI Studio
+
+### 1. Install Dependencies
+
+From the project root, install dependencies for both the client and server:
+
 ```bash
 npm run install:all
 ```
 
-### ⚙️ 2. Environment Variables Configuration
+### 2. Configure Environment Variables
 
-Create a `.env` file inside the `server/` directory:
+Create a `.env` file in the `server/` directory:
+
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/modmyride
@@ -80,26 +84,31 @@ JWT_SECRET=your_jwt_secret_key_here
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-### 🏎️ 3. Seeding the Database (Optional)
-If you have a DB seeding script, run it in the server directory to populate default vehicles (e.g. Honda City, KTM 390 ADV) and aftermarket parts (e.g. Red Rooster exhaust, K&N filters, Brembo brakes):
+### 3. Seed the Database (Optional)
+
+Populate the database with sample vehicles and parts data:
+
 ```bash
 cd server
-npm run seed  # Or the specific seed command for your project
+npm run seed
 ```
 
-### 🚦 4. Launching the Platform
-Start both the React development server and the Node backend concurrently using a single command:
+### 4. Run the Application
+
+Start both the frontend and backend concurrently:
+
 ```bash
 npm run dev
 ```
 
-- **Client Web Portal**: `http://localhost:5173/` (or auto-allocated port)
-- **Server API Engine**: `http://localhost:5000/`
+Once running:
+- Frontend: `http://localhost:5173/`
+- API server: `http://localhost:5000/`
 
 ---
 
-## ⚙️ Engineering Rules
+## Design Decisions
 
-1. **Strict Compatibility Checking**: Parts are bound to specific `vehicleType` (Car/Bike), `make`, and `compatibility` arrays to prevent cross-contamination (e.g. installing a bike exhaust on a hatchback).
-2. **Dynamic INR Formatting**: All calculations, additions, and remaining budgets are automatically localized to the Indian Rupee (INR) system.
-3. **Admin Controls**: Dedicated dashboard for administrators to seed new parts, update pricing, and monitor active configuration counts.
+- **Strict compatibility enforcement** — Parts are mapped to specific vehicle types, makes, and models. The system prevents invalid combinations (e.g., a bike exhaust being recommended for a sedan).
+- **INR-native pricing** — All budget calculations, part costs, and remaining balances are formatted in Indian Rupees throughout the interface.
+- **Role-based access** — Admins have a separate dashboard for managing the parts catalog, vehicle database, and user accounts. Standard users interact only with the tuning wizard, AI advisor, and their saved profiles.
