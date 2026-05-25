@@ -31,3 +31,84 @@ The platform handles compatibility validation between vehicles and parts, genera
 
 ```
 ModMyRide/
+├── client/                     # React frontend
+│   ├── public/
+│   └── src/
+│       ├── assets/             # Images and static media
+│       ├── components/         # Shared UI components (Navbar, etc.)
+│       ├── pages/              # Page-level components
+│       ├── services/           # API service layer
+│       ├── App.jsx             # Route definitions
+│       └── main.jsx            # Application entry point
+│
+├── server/                     # Express backend
+│   └── src/
+│       ├── config/             # Database and environment config
+│       ├── controllers/        # Request handlers
+│       ├── middleware/         # Auth and CORS middleware
+│       ├── models/             # Mongoose schemas
+│       ├── routes/             # API route definitions
+│       ├── app.js              # Express app configuration
+│       └── server.js           # Server entry point
+│
+├── package.json                # Root-level scripts (install, dev)
+└── README.md
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js v18 or later
+- MongoDB (local instance or Atlas connection string)
+- A Gemini API key from Google AI Studio
+
+### 1. Install Dependencies
+
+From the project root, install dependencies for both the client and server:
+
+```bash
+npm run install:all
+```
+
+### 2. Configure Environment Variables
+
+Create a `.env` file in the `server/` directory:
+
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/modmyride
+JWT_SECRET=your_jwt_secret_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+### 3. Seed the Database (Optional)
+
+Populate the database with sample vehicles and parts data:
+
+```bash
+cd server
+npm run seed
+```
+
+### 4. Run the Application
+
+Start both the frontend and backend concurrently:
+
+```bash
+npm run dev
+```
+
+Once running:
+- Frontend: `http://localhost:5173/`
+- API server: `http://localhost:5000/`
+
+---
+
+## Design Decisions
+
+- **Strict compatibility enforcement** — Parts are mapped to specific vehicle types, makes, and models. The system prevents invalid combinations (e.g., a bike exhaust being recommended for a sedan).
+- **INR-native pricing** — All budget calculations, part costs, and remaining balances are formatted in Indian Rupees throughout the interface.
+- **Role-based access** — Admins have a separate dashboard for managing the parts catalog, vehicle database, and user accounts. Standard users interact only with the tuning wizard, AI advisor, and their saved profiles.
