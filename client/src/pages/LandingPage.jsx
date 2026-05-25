@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchCurrentUser, setAuthToken } from "../services/api.js";
+import { fetchCurrentUser, setAuthToken, fetchTopBuilds } from "../services/api.js";
 import heroImage from "../assets/landing_page_image.png";
 import Navbar from "../components/Navbar.jsx";
 
@@ -8,6 +8,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [topBuilds, setTopBuilds] = useState([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -19,6 +20,17 @@ const LandingPage = () => {
       }
     };
     checkUser();
+
+    // Fetch top ranked builds (public, no auth needed)
+    const loadTopBuilds = async () => {
+      try {
+        const data = await fetchTopBuilds();
+        setTopBuilds(data.profiles || []);
+      } catch {
+        // Silently fail — section just won't render
+      }
+    };
+    loadTopBuilds();
   }, []);
 
   useEffect(() => {
@@ -77,7 +89,7 @@ const LandingPage = () => {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-[#C0392B]">Vehicle's Potential</span>
           </h1>
           <p className="text-zinc-400 text-lg md:text-xl max-w-xl mb-10 font-body-lg animate-in fade-in slide-in-from-left duration-1000 delay-300">
-            Get personalized car & bike performance upgrade recommendations based on your goals and budget — built for Indian enthusiasts.
+            Get personalized car & bike performance upgrade recommendations based on your goals and budget. <br></br>Built for Indian Auto Enthusiasts.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom duration-1000 delay-500">
             <button
@@ -135,6 +147,116 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Top Ranked Builds Section */}
+      {topBuilds.length > 0 && (
+        <section className="py-32 px-8 md:px-16 bg-[#1d100e] relative overflow-hidden">
+          {/* Subtle decorative elements */}
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#C0392B]/20 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#C0392B]/20 to-transparent"></div>
+
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-20 gap-8">
+              <div className="max-w-2xl">
+                <h2 className="text-[#C0392B] font-['Oswald'] uppercase tracking-[0.2em] text-sm mb-4">Hall of Fame</h2>
+                <h3 className="text-4xl md:text-5xl font-['Oswald'] font-bold uppercase text-white tracking-tight">Top Ranked Builds</h3>
+              </div>
+              <button
+                onClick={() => navigate('/builds')}
+                className="text-zinc-500 hover:text-[#C0392B] text-sm font-['Oswald'] uppercase tracking-widest transition-colors flex items-center gap-2 group"
+              >
+                View All Builds
+                <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+              {topBuilds.map((build, i) => {
+                const vehicleType = build.vehicle?.type || build.customVehicle?.type || 'car';
+                let make = build.vehicle?.make || build.customVehicle?.make;
+                let model = build.vehicle?.model || build.customVehicle?.model;
+                const year = build.vehicle?.year || '';
+                const image = build.vehicle?.image || '';
+
+                if (!make && !model) {
+                  if (build.isAiBuild || build.name) {
+                    const cleanName = build.name.replace(/ Build$/i, '');
+                    const parts = cleanName.split(' ');
+                    const split = Math.ceil(parts.length / 2);
+                    make = parts.slice(0, split).join(' ');
+                    model = parts.slice(split).join(' ');
+                  } else {
+                    make = 'Custom';
+                    model = 'Build';
+                  }
+                }
+
+                return (
+                  <div
+                    key={build._id}
+                    className="group bg-[#2a1c1a]/60 border border-white/5 overflow-hidden transition-all duration-500 hover:border-[#C0392B]/40 hover:-translate-y-2 hover:shadow-[0_20px_60px_-20px_rgba(192,57,43,0.3)]"
+                    style={{ animationDelay: `${i * 100}ms` }}
+                  >
+                    {/* Image / Placeholder */}
+                    <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#242424] to-[#121212]">
+                      {image ? (
+                        <img
+                          src={image}
+                          alt={`${make} ${model}`}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="material-symbols-outlined text-5xl text-zinc-800/50 transition-transform duration-500 group-hover:scale-110">
+                            {vehicleType === 'bike' ? 'motorcycle' : 'directions_car'}
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+
+                      {/* Goal Badge */}
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-[#C0392B]/90 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-1 uppercase tracking-widest">
+                          {build.goal}
+                        </span>
+                      </div>
+
+                      {/* Rank Number */}
+                      <div className="absolute top-3 right-3">
+                        <span className="text-white/10 font-['Oswald'] text-3xl font-black">
+                          #{i + 1}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="p-5 space-y-3">
+                      <div>
+                        <h4 className="font-['Oswald'] text-base font-bold text-white uppercase truncate tracking-wide">
+                          {build.name}
+                        </h4>
+                        <p className="text-zinc-600 text-xs font-['Oswald'] uppercase tracking-wider mt-1">
+                          {make} {model} {year && `• ${year}`}
+                        </p>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                        <span className="text-[#C0392B]/80 text-[11px] flex items-center gap-1 font-['Oswald'] font-bold">
+                          <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                          {build.likeCount || 0}
+                        </span>
+                        <span className="text-zinc-500 font-['Oswald'] font-bold text-xs">
+                          ₹{build.totalCost?.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* CTA Section */}
       <section className="py-24 px-8 md:px-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-[#C0392B]/5"></div>
@@ -162,7 +284,7 @@ const LandingPage = () => {
               <span className="font-['Oswald'] text-xl font-black tracking-tighter uppercase text-white">ModMyRide</span>
             </div>
             <p className="text-zinc-500 text-sm mb-6 max-w-sm">
-              The definitive tuning platform for the modern Indian motorist. Precision engineered for performance enthusiasts.
+              The definitive tuning platform for the modern Indian Auto Enthusiasts. With precision engineered for the users.
             </p>
           </div>
 
@@ -171,7 +293,7 @@ const LandingPage = () => {
             <ul className="space-y-4">
               <li><button onClick={handleStartTuning} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Recommendations</button></li>
               <li><button onClick={() => navigate("/ai-advisor")} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">AI Advisor</button></li>
-              <li><button onClick={() => navigate("/profiles")} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Saved Profiles</button></li>
+              <li><button onClick={() => navigate("/builds")} className="text-zinc-500 hover:text-[#C0392B] text-sm transition-colors text-left">Saved Builds</button></li>
             </ul>
           </div>
 

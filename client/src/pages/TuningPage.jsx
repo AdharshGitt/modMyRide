@@ -104,11 +104,22 @@ const TuningPage = () => {
               if (profile.vehicle) {
                 setLoadedDbVehicle(profile.vehicle);
                 setLoadedSyntheticVehicle(null);
-              } else if (profile.customVehicle) {
+              } else {
+                // Fallback to customVehicle or profile name
+                let make = vehicleData.make;
+                let model = vehicleData.model;
+                if (!make || !model) {
+                  const cleanName = (profile.name || "").replace(/ Build$/i, '');
+                  const parts = cleanName.split(' ');
+                  const split = Math.ceil(parts.length / 2);
+                  make = parts.slice(0, split).join(' ');
+                  model = parts.slice(split).join(' ');
+                }
+                
                 setLoadedSyntheticVehicle({
                   _id: "ai-synthetic",
-                  make: vehicleData.make || "",
-                  model: vehicleData.model || "",
+                  make: make || "Custom",
+                  model: model || "Build",
                   type: vehicleData.type || "bike",
                   year: vehicleData.year || new Date().getFullYear(),
                   stockPower: 50,

@@ -14,7 +14,8 @@ const App = () => {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/tuning" element={<TuningPage />} />
         <Route path="/ai-advisor" element={<AIAdvisor />} />
-        <Route path="/profiles" element={<SavedProfilesPage />} />
+        <Route path="/builds" element={<SavedProfilesPage />} />
+        <Route path="/profiles" element={<Navigate to="/builds" replace />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

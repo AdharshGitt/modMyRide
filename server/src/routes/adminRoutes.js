@@ -3,8 +3,10 @@ import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import User from "../models/User.js";
 import { getVehicles, createVehicle, updateVehicle, deleteVehicle } from "../controllers/vehicleController.js";
 import { getUpgrades, createUpgrade, updateUpgrade, deleteUpgrade } from "../controllers/upgradeController.js";
+import { getAdminProfiles, updateAdminProfile, deleteAdminProfile } from "../controllers/profileController.js";
 import Vehicle from "../models/Vehicle.js";
 import Upgrade from "../models/Upgrade.js";
+import SavedProfile from "../models/SavedProfile.js";
 
 const router = Router();
 
@@ -98,6 +100,10 @@ router.delete("/users/:id", async (req, res) => {
     if (user.role === "admin") {
       return res.status(403).json({ message: "Cannot delete an admin user" });
     }
+    
+    // Cascade delete user's saved profiles
+    await SavedProfile.deleteMany({ user: req.params.id });
+    
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: "User deleted successfully" });
   } catch (err) {
@@ -111,7 +117,7 @@ router.put("/users/:id", async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const { email, role } = req.body;
+    const { email, role, username } = req.body;
     
     // Prevent changing role of admin users
     if (user.role === "admin" && role !== "admin") {
@@ -125,6 +131,9 @@ router.put("/users/:id", async (req, res) => {
     
     user.email = email || user.email;
     user.role = role || user.role;
+    if (username !== undefined) {
+      user.username = username;
+    }
     
     await user.save();
     res.json({ user: user });
@@ -150,5 +159,13 @@ router.get("/upgrades", getUpgrades);
 router.post("/upgrades", createUpgrade);
 router.put("/upgrades/:id", updateUpgrade);
 router.delete("/upgrades/:id", deleteUpgrade);
+
+// =======================
+// Profile Routes
+// =======================
+
+router.get("/profiles", getAdminProfiles);
+router.put("/profiles/:id", updateAdminProfile);
+router.delete("/profiles/:id", deleteAdminProfile);
 
 export default router;

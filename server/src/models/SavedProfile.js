@@ -58,6 +58,14 @@ const savedProfileSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  likes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  likeCount: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now

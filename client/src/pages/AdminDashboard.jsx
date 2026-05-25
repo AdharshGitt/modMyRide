@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Tabs from "../components/Tabs.jsx";
 import Pagination from "../components/Pagination.jsx";
+import AdminProfilesTab from "./Admin/AdminProfilesTab.jsx";
 import {
   ResponsiveContainer,
   LineChart,
@@ -185,10 +186,10 @@ const AdminDashboard = () => {
   // --- User Handlers ---
   const handleOpenUserModal = (user = null) => {
     if (user) {
-      setCurrentUser({ _id: user._id, email: user.email, role: user.role });
+      setCurrentUser({ _id: user._id, email: user.email, role: user.role, username: user.username });
       setIsEditingUser(true);
     } else {
-      setCurrentUser({ _id: "", email: "", role: "user" });
+      setCurrentUser({ _id: "", email: "", role: "user", username: "" });
       setIsEditingUser(false);
     }
     setIsUserModalOpen(true);
@@ -392,6 +393,13 @@ const AdminDashboard = () => {
             <span className="material-symbols-outlined" data-icon="manufacturing">manufacturing</span>
             <span>Parts Catalog</span>
           </button>
+          <button
+            onClick={() => setActiveTab("builds")}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-['Oswald'] uppercase font-medium tracking-tight ${activeTab === "builds" ? "bg-[#C0392B] text-white shadow-lg" : "text-zinc-400 hover:text-[#C0392B] hover:bg-[#242424]"}`}
+          >
+            <span className="material-symbols-outlined" data-icon="save">save</span>
+            <span>Saved Builds</span>
+          </button>
         </nav>
         <div className="mt-auto border-t border-white/5 pt-4">
           <button 
@@ -456,7 +464,7 @@ const AdminDashboard = () => {
         </header>
 
         {/* Dashboard Content */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
           {activeTab === "overview" && (
             <>
               {/* Stats Grid */}
@@ -855,12 +863,13 @@ const AdminDashboard = () => {
                 <div className="p-6 border-b border-white/5">
                   <h3 className="font-h3 text-white uppercase tracking-wider">All Users</h3>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto custom-scrollbar">
                   <table className="w-full text-left font-body-sm">
                     <thead className="bg-[#111111] border-b border-white/5">
                       <tr>
                         <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">ID</th>
                         <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Email</th>
+                        <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Username</th>
                         <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Role</th>
                         <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Joined</th>
                         <th className="px-6 py-4 font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Actions</th>
@@ -871,6 +880,7 @@ const AdminDashboard = () => {
                         <tr key={user._id} className="bg-[#111111] hover:bg-[#242424] transition-colors">
                           <td className="px-6 py-4 text-[#C0392B] font-mono">{user._id.slice(-6)}</td>
                           <td className="px-6 py-4 text-white font-medium">{user.email}</td>
+                          <td className="px-6 py-4 text-zinc-300">{user.username || user.email.split('@')[0]}</td>
                           <td className="px-6 py-4">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-label-caps uppercase ${user.role === 'admin' ? 'bg-[#C0392B]/10 text-[#C0392B]' : 'bg-zinc-800 text-zinc-400'}`}>
                               {user.role}
@@ -1153,6 +1163,10 @@ const AdminDashboard = () => {
             </>
           )}
 
+          {activeTab === "builds" && (
+            <AdminProfilesTab />
+          )}
+
           {activeTab === "upgrades" && (
             <>
               <div className="flex justify-between items-center mb-6">
@@ -1290,7 +1304,7 @@ const AdminDashboard = () => {
       {/* User Form Modal */}
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={handleCloseUserModal}>
-          <div className="bg-[#1A1A1A] machined-edge w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#1A1A1A] machined-edge w-full max-w-md max-h-[90vh] overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#111111] sticky top-0 z-10">
               <h2 className="font-h3 text-white uppercase tracking-wider">Edit User</h2>
               <button className="text-zinc-500 hover:text-[#C0392B] transition-colors" onClick={handleCloseUserModal}>
@@ -1306,6 +1320,16 @@ const AdminDashboard = () => {
                   value={currentUser.email}
                   onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
                   placeholder="user@example.com"
+                  className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="font-label-caps text-zinc-500 uppercase tracking-widest text-[10px]">Username</label>
+                <input
+                  type="text"
+                  value={currentUser.username || ""}
+                  onChange={(e) => setCurrentUser({ ...currentUser, username: e.target.value })}
+                  placeholder="Username"
                   className="w-full bg-[#111111] border border-white/10 rounded-none px-4 py-3 text-white focus:border-[#C0392B] focus:ring-1 focus:ring-[#C0392B] outline-none transition-all font-body-sm"
                 />
               </div>
@@ -1333,7 +1357,7 @@ const AdminDashboard = () => {
       {/* Vehicle Form Modal */}
       {isVehicleModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={handleCloseVehicleModal}>
-          <div className="bg-[#1A1A1A] machined-edge w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#1A1A1A] machined-edge w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#111111] sticky top-0 z-10">
               <h2 className="font-h3 text-white uppercase tracking-wider">{isEditingVehicle ? "Edit Vehicle" : "Add Vehicle"}</h2>
               <button className="text-zinc-500 hover:text-[#C0392B] transition-colors" onClick={handleCloseVehicleModal}>
@@ -1503,7 +1527,7 @@ const AdminDashboard = () => {
       {/* Upgrade Form Modal */}
       {isUpgradeModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={handleCloseUpgradeModal}>
-          <div className="bg-[#1A1A1A] machined-edge w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#1A1A1A] machined-edge w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
             <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#111111] sticky top-0 z-10">
               <h2 className="font-h3 text-white uppercase tracking-wider">{isEditingUpgrade ? "Edit Upgrade" : "Add Upgrade"}</h2>
               <button className="text-zinc-500 hover:text-[#C0392B] transition-colors" onClick={handleCloseUpgradeModal}>

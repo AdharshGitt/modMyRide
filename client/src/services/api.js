@@ -76,6 +76,21 @@ export const fetchUpgrades = async () => {
   return data;
 };
 
+export const fetchTopBuilds = async () => {
+  const { data } = await api.get("/public/top-builds");
+  return data;
+};
+
+export const fetchCommunityBuilds = async () => {
+  const { data } = await api.get("/public/community-builds");
+  return data;
+};
+
+export const toggleBuildLike = async (buildId) => {
+  const { data } = await api.post(`/profiles/${buildId}/like`);
+  return data;
+};
+
 // =======================
 // Vehicle API Functions
 // =======================
@@ -145,6 +160,25 @@ export const fetchUserProfileById = async (id) => {
 
 export const deleteUserProfile = async (id) => {
   const { data } = await api.delete(`/profiles/${id}`);
+  return data;
+};
+
+// =======================
+// Admin Profile Functions
+// =======================
+
+export const fetchAdminProfiles = async () => {
+  const { data } = await api.get("/admin/profiles");
+  return data;
+};
+
+export const updateAdminProfile = async (id, profileData) => {
+  const { data } = await api.put(`/admin/profiles/${id}`, profileData);
+  return data;
+};
+
+export const deleteAdminProfile = async (id) => {
+  const { data } = await api.delete(`/admin/profiles/${id}`);
   return data;
 };
 

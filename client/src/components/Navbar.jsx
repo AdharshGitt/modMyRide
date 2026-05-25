@@ -84,12 +84,12 @@ const Navbar = () => {
               AI Advisor
             </button>
             <button
-              onClick={() => handleNavigation("/profiles")}
+              onClick={() => handleNavigation("/builds")}
               className={`font-['Oswald'] uppercase tracking-widest text-[11px] transition-colors ${
-                isActive("/profiles") ? "nav-active" : "nav-link text-zinc-400"
+                isActive("/builds") ? "nav-active" : "nav-link text-zinc-400"
               }`}
             >
-              Saved Profiles
+              Saved Builds
             </button>
           </div>
 
@@ -217,12 +217,12 @@ const Navbar = () => {
             AI Advisor
           </button>
           <button
-            onClick={() => handleNavigation("/profiles")}
+            onClick={() => handleNavigation("/builds")}
             className={`py-2 text-left font-['Oswald'] uppercase tracking-widest text-[13px] border-b border-white/5 ${
-              isActive("/profiles") ? "text-[#C0392B] font-bold" : "text-zinc-400"
+              isActive("/builds") ? "text-[#C0392B] font-bold" : "text-zinc-400"
             }`}
           >
-            Saved Profiles
+            Saved Builds
           </button>
         </div>
 
